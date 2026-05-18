@@ -4,28 +4,60 @@
 
 Archpack should avoid growing into a large unclear tool.
 
-After the MVP, new ideas should be explored as small isolated experiments before they are considered for the main project.
+The MVP repository is a validation space. It exists to test the core idea and candidate features.
+
+The release body may live in a separate fork or a separate repository.
+
+The purpose is to allow many experiments without forcing every experiment into the release version.
+
+---
+
+## 1. Core policy
+
+Do not treat the MVP repository as the final product boundary.
+
+Use it as a feature validation environment.
 
 The default rule is:
 
 ```text
-one problem → one experiment → one review → accept, revise, or reject
+one problem → one experiment → one review → promote or discard
 ```
 
----
-
-## 1. Principle
-
-Do not add a feature to the main project just because it sounds useful.
-
-A feature must first prove that it solves a concrete problem without making Archpack harder to understand.
-
-Main should stay small.
-Experiments can be many.
+Only features that prove they belong in the release body should be promoted.
 
 ---
 
-## 2. Experiment unit
+## 2. Repository roles
+
+### 2.1 MVP repository
+
+The MVP repository is used to:
+
+- prove the smallest useful loop,
+- keep validation files and examples,
+- test candidate features,
+- collect user-story-map problems,
+- compare one-feature experiments.
+
+It may become messy during exploration, as long as the mess is intentional and reviewable.
+
+### 2.2 Release repository or release fork
+
+The release body is used to:
+
+- hold only accepted features,
+- stay small and understandable,
+- keep the public workflow stable,
+- avoid speculative feature growth,
+- provide a clean implementation for actual users.
+
+The release body can be a separate fork or a separate repository.
+The exact choice is not decided yet.
+
+---
+
+## 3. Experiment unit
 
 Each experiment should focus on exactly one feature or one problem.
 
@@ -44,83 +76,96 @@ Bad examples:
 
 ---
 
-## 3. Recommended workflow
+## 4. Recommended workflow
 
 ```text
-MVP main branch
-→ create issue from a concrete problem
-→ create one-feature fork or branch
-→ implement the smallest experiment
-→ review generated behavior and complexity
-→ decide whether to merge, revise, or discard
+MVP validation repo
+→ concrete problem from user story map
+→ one-feature fork or branch
+→ smallest experiment
+→ review behavior and complexity
+→ promote to release body, revise, or discard
 ```
 
-The experiment can live in a fork or a separate branch.
+The experiment can live in:
 
-The important point is that it must remain isolated from main until reviewed.
+- a fork,
+- a branch,
+- or a small separate repository.
 
----
-
-## 4. Review questions
-
-Before merging an experiment, answer:
-
-1. What concrete problem does it solve?
-2. Can the problem be reproduced with a small example?
-3. Does the feature keep the pack format understandable?
-4. Does it preserve the small MVP loop?
-5. Does it introduce hidden complexity?
-6. Can it be tested in CI?
-7. Can it be documented briefly?
-8. Should this be merged, revised, or rejected?
+It should remain isolated until reviewed.
 
 ---
 
-## 5. Merge criteria
+## 5. Promotion criteria
 
-An experiment may be merged only if:
+A feature may be promoted to the release body only if:
 
 - it solves a repeated or important user problem,
 - it has a small example,
 - it has tests or clear manual verification steps,
 - it does not force unrelated schema changes,
-- it does not make the core workflow harder to explain.
+- it does not make the core workflow harder to explain,
+- it can be documented briefly,
+- it fits the current release scope.
 
-If these are not true, the experiment should remain outside main.
+If these are not true, the experiment should remain outside the release body.
 
 ---
 
-## 6. Rejection is allowed
+## 6. Review questions
 
-Rejecting an experiment is not a failure.
+Before promoting an experiment, answer:
 
-Rejected experiments are useful when they reveal:
+1. What concrete problem does it solve?
+2. Can the problem be reproduced with a small example?
+3. Does the feature keep the pack format understandable?
+4. Does it preserve the small core loop?
+5. Does it introduce hidden complexity?
+6. Can it be tested?
+7. Can it be documented briefly?
+8. Should this be promoted, revised, or discarded?
+
+---
+
+## 7. Discarding is allowed
+
+Discarding an experiment is not a failure.
+
+Discarded experiments are useful when they reveal:
 
 - the feature is too complex,
 - the problem is not Archpack's responsibility,
 - the idea needs a different design,
-- the feature should stay as an external add-on.
+- the feature should stay as an external add-on,
+- the feature is useful only for a narrow project type.
 
 ---
 
-## 7. Relationship to user story mapping
+## 8. Relationship to user story mapping
 
 The user story map identifies concrete problems.
 
-This experiment policy defines how candidate solutions are tested.
+This experiment policy defines how candidate solutions are tested and promoted.
 
 ```text
-user story map → problem issue → one-feature experiment → review → main or reject
+user story map
+→ problem issue
+→ one-feature experiment
+→ review
+→ release body or discard
 ```
 
 ---
 
-## 8. First rule
+## 9. First rule
 
-Do not expand Archpack before the MVP works.
+Do not expand the release body before the MVP loop works.
 
-The MVP remains:
+The MVP loop remains:
 
 ```text
 pack → file tree → local AGENTS.md → effective AGENTS.md
 ```
+
+After that, experiments may be generated in quantity, but only reviewed and accepted features should enter the release body.
