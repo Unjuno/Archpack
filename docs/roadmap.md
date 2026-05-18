@@ -6,17 +6,17 @@ This roadmap describes what Archpack should become, step by step.
 
 It is not an implementation spec, command reference, or finalized schema.
 
-Archpack should first prove one small loop:
+Archpack should first prove one small core loop:
 
 ```text
-pack → file tree → local AGENTS.md → effective AGENTS.md
+pack → file tree
 ```
 
-Anything beyond that stays deferred until real use shows a concrete need.
+Everything else should be treated as a plugin candidate until the core is stable.
 
 ---
 
-## 1. Stage 1: generate a file tree
+## 1. Core MVP: file structure generator
 
 ### Goal
 
@@ -34,6 +34,10 @@ The first value is reproducible structure generation.
 
 Instead of manually splitting one architecture document into many files, Archpack should create those files directly.
 
+### Success state
+
+A user can prepare one pack file, run Archpack, and obtain the described file tree.
+
 ### Undecided
 
 - Exact pack schema.
@@ -43,11 +47,30 @@ Instead of manually splitting one architecture document into many files, Archpac
 
 ---
 
-## 2. Stage 2: generate AGENTS.md in selected directories
+## 2. Plugin direction
+
+Archpack should not add every useful capability into the core.
+
+The core should stay small:
+
+```text
+read pack → generate file tree
+```
+
+Additional behavior should be explored as plugins or plugin-like experiments.
+
+This keeps the release body understandable even if many experiments are created.
+
+---
+
+## 3. First plugin candidate: AGENTS.md generation
 
 ### Goal
 
-Generate `AGENTS.md` at the project root and selected subdirectories.
+Generate `AGENTS.md` files from pack-defined local rules.
+
+A project root `AGENTS.md` is expected.
+Additional `AGENTS.md` files can be generated in selected subdirectories.
 
 Example:
 
@@ -61,11 +84,6 @@ project/
 │     └─ auth/
 │        ├─ AGENTS.md
 │        └─ password_service.py
-├─ lab/
-│  ├─ AGENTS.md
-│  ├─ index.html
-│  ├─ style.css
-│  └─ app.js
 └─ docs/
    ├─ AGENTS.md
    └─ architecture.md
@@ -91,7 +109,7 @@ Directory-level files separate responsibilities:
 
 ---
 
-## 3. Stage 3: generate effective AGENTS.md
+## 4. Second plugin candidate: effective AGENTS.md
 
 ### Goal
 
@@ -151,53 +169,31 @@ Generated `src/services/auth/AGENTS.md`:
 
 ---
 
-## 4. Stage 4: prove the smallest useful loop
+## 5. Development sequence
 
-### Goal
-
-Demonstrate the loop with a small example pack:
+The sequence should be:
 
 ```text
-pack → file tree → local AGENTS.md → effective AGENTS.md
+1. Build core file tree generator.
+2. Validate the core with small packs.
+3. Define a minimal plugin boundary.
+4. Try AGENTS.md generation as the first plugin.
+5. Try effective AGENTS.md generation as a second plugin or extension.
+6. Promote only useful, reviewable plugin behavior into the release body.
 ```
 
-The example should include at least three levels, such as:
-
-```text
-project → src → services → auth
-```
-
-### Success state
-
-A reader can inspect the pack and generated output and understand:
-
-- what files were generated,
-- where `AGENTS.md` was placed,
-- how inherited rules accumulated,
-- why responsibility is separated by directory.
-
----
-
-## 5. Stage 5: document the first stable format
-
-### Goal
-
-After the smallest loop works, document only the fields that are actually used.
-
-### Why
-
-The schema should follow the working concept.
-
-Writing a large schema first would create fake precision.
+The core MVP must not depend on the AGENTS.md plugin.
 
 ---
 
 ## 6. Deferred candidates
 
-These are useful but not confirmed for the first version.
+These are useful but not confirmed for the core.
 
-They should be considered only after MVP use reveals concrete problems.
+They should be considered only after core MVP use reveals concrete problems.
 
+- AGENTS.md generation.
+- Effective AGENTS.md generation.
 - Generated-file drift check.
 - Repair.
 - Clean-up.
@@ -212,12 +208,14 @@ They should be considered only after MVP use reveals concrete problems.
 
 ## 7. Discipline
 
-Do not expand the roadmap before the small loop works.
+Do not expand the core before the small loop works.
 
 First prove:
 
 ```text
-pack → file tree → local AGENTS.md → effective AGENTS.md
+pack → file tree
 ```
 
-Then collect user problems with the user story map and decide the next feature.
+Then test additional capabilities as plugins.
+
+Only promote plugin behavior when it solves a concrete problem without making the core harder to explain.
