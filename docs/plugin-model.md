@@ -10,63 +10,13 @@ The core MVP is:
 pack → file tree
 ```
 
-Additional behavior should be added through plugins or plugin-like experiments.
-
-Examples:
-
-- `AGENTS.md` generation,
-- effective inherited `AGENTS.md`,
-- generated-file drift checks,
-- repair,
-- clean-up,
-- reference monitoring,
-- network monitoring.
+Plugins are a future extension point. They must not be required for the core MVP.
 
 ---
 
-## 1. Core boundary
+## 1. Review result
 
-The core should only be responsible for:
-
-- reading a pack file,
-- creating directories,
-- creating files,
-- writing file contents,
-- applying basic safety checks.
-
-The core should not require `AGENTS.md` generation or any AI-agent-specific behavior.
-
----
-
-## 2. Local project directory
-
-Archpack may use a project-local directory:
-
-```text
-.archpack/
-```
-
-This directory is for Archpack metadata, project-local settings, and future plugin state.
-
-The directory must not be flat if plugins are expected to grow.
-
-Flat layout is rejected:
-
-```text
-.archpack/
-├─ config.yml
-├─ plugins.yml
-├─ manifest.yml
-└─ lock.yml
-```
-
-This mixes core state and plugin state and will become unclear as plugins increase.
-
----
-
-## 3. Recommended local layout
-
-Use separated areas for core and plugins:
+The previous local layout idea was rejected:
 
 ```text
 .archpack/
@@ -76,102 +26,119 @@ Use separated areas for core and plugins:
 │  └─ lock.yml
 └─ plugins/
    ├─ index.yml
-   ├─ agents/
-   │  ├─ config.yml
-   │  ├─ manifest.yml
-   │  └─ lock.yml
-   ├─ ref-audit/
-   │  ├─ config.yml
-   │  ├─ manifest.yml
-   │  └─ lock.yml
-   └─ network-audit/
+   └─ <plugin-name>/
       ├─ config.yml
       ├─ manifest.yml
       └─ lock.yml
 ```
 
-The exact files are not fixed yet.
+Reason:
 
-The important rule is structural separation:
+- It still fixes too much structure before there are real plugins.
+- It mixes project configuration, generated state, plugin state, and possible plugin discovery.
+- It implies every plugin needs the same `config / manifest / lock` shape.
+- It risks making `.archpack/` look like a package manager before Archpack needs one.
 
-- core state belongs under `.archpack/core/`,
-- plugin index belongs under `.archpack/plugins/index.yml`,
-- each plugin owns its own `.archpack/plugins/<plugin-name>/` directory.
+The corrected rule is:
 
----
-
-## 4. Why this layout
-
-A nested layout gives each plugin a clear namespace.
-
-It avoids:
-
-- collisions between plugin files,
-- one large shared `plugins.yml`,
-- unclear ownership of `manifest.yml` and `lock.yml`,
-- accidental coupling between unrelated plugins,
-- migration pain when plugins need their own state.
-
-Each plugin can manage its own local state without changing the core directory structure.
+> Do not design a full plugin storage layout before the core MVP and first plugin experiment prove what state is actually needed.
 
 ---
 
-## 5. Why not an APT-like package manager now
+## 2. Core boundary
 
-An APT-like package manager is too large for the MVP.
+The core should only be responsible for:
 
-It would introduce questions that are not needed yet:
+- reading a pack file,
+- creating directories,
+- creating files,
+- writing file contents,
+- applying basic safety checks.
 
-- package registry,
-- dependency resolution,
-- version pinning,
-- trust and signatures,
-- installation paths,
-- upgrade and rollback behavior,
-- plugin compatibility.
+The core should not require:
 
-Those may become useful later, but they should not be part of the core MVP.
-
-The first step is not package management.
-
-The first step is local plugin namespacing.
-
----
-
-## 6. Recommended first model
-
-Start with local plugin declaration and local plugin state.
-
-Example direction:
-
-```yaml
-# .archpack/plugins/index.yml
-plugins:
-  - name: agents
-    enabled: true
-    state_dir: agents
-```
-
-This does not require a package manager.
-
-It only says which known plugin behavior should run for this project and where that plugin may store its project-local state.
+- `AGENTS.md` generation,
+- plugin installation,
+- package management,
+- generated-file repair,
+- clean-up,
+- reference monitoring,
+- network monitoring.
 
 ---
 
-## 7. First plugin candidate: AGENTS.md generator
+## 3. `.archpack/` rule
 
-`AGENTS.md` generation should be treated as a plugin candidate, not core behavior.
+`.archpack/` may be introduced later, but it is not required for the core MVP.
 
-Possible local state:
+If introduced, it should store project-local Archpack data only.
+
+It should not store plugin implementation code.
+
+It should not become an APT-like package directory.
+
+---
+
+## 4. Better future layout direction
+
+If project-local state becomes necessary, separate configuration, state, and cache.
+
+Candidate direction:
 
 ```text
-.archpack/plugins/agents/
+.archpack/
 ├─ config.yml
-├─ manifest.yml
-└─ lock.yml
+├─ state/
+│  ├─ core/
+│  │  ├─ manifest.yml
+│  │  └─ lock.yml
+│  └─ plugins/
+│     └─ agents/
+│        ├─ manifest.yml
+│        └─ lock.yml
+└─ cache/
+   └─ plugins/
+      └─ agents/
 ```
 
-The plugin may eventually read pack sections such as:
+This is only a candidate.
+
+The important separation is:
+
+- `config.yml` = project-local settings,
+- `state/` = generated state and reproducibility metadata,
+- `state/core/` = core-generated state,
+- `state/plugins/<plugin-name>/` = per-plugin generated state,
+- `cache/` = disposable cache.
+
+---
+
+## 5. Plugin configuration direction
+
+Plugin enablement should be project-level configuration, not a package installation model.
+
+Possible future direction:
+
+```yaml
+# .archpack/config.yml
+plugins:
+  - id: agents
+    enabled: true
+```
+
+This says only that a known plugin is enabled for this project.
+
+It does not define where plugin code is installed.
+It does not define a plugin registry.
+It does not define dependency resolution.
+
+---
+
+## 6. First plugin candidate
+
+`AGENTS.md` generation is the first plugin candidate, not core behavior.
+
+Possible future pack section:
 
 ```yaml
 agent_rules:
@@ -184,18 +151,36 @@ agent_rules:
       - Keep application logic inside src.
 ```
 
-The plugin would generate:
+Possible output:
 
 ```text
 AGENTS.md
 src/AGENTS.md
 ```
 
-A later extension may generate effective inherited `AGENTS.md` files.
+A later plugin extension may generate effective inherited `AGENTS.md` files.
 
 ---
 
-## 8. Plugin promotion rule
+## 7. Why not an APT-like package manager now
+
+An APT-like package manager is too large for the current project stage.
+
+It would require decisions about:
+
+- package registry,
+- dependency resolution,
+- version pinning,
+- trust and signatures,
+- installation paths,
+- upgrade and rollback behavior,
+- plugin compatibility.
+
+Those decisions should wait until there are multiple real plugins worth managing.
+
+---
+
+## 8. Promotion rule
 
 A plugin should be promoted only if:
 
@@ -207,18 +192,21 @@ A plugin should be promoted only if:
 
 ---
 
-## 9. Deferred package management
+## 9. Current decision
 
-A real package manager can be reconsidered only after there are multiple useful plugins.
-
-Possible future direction:
+Current decision:
 
 ```text
-archpack plugin add agents
-archpack plugin add ref-audit
-archpack plugin update
+Core MVP:
+  pack → file tree
+
+Plugin model:
+  deferred
+
+.archpack/:
+  not required for core MVP
+  may later store config/state/cache
+
+APT-like package manager:
+  explicitly deferred
 ```
-
-This is intentionally deferred.
-
-Do not build a plugin package manager before there are real plugins worth managing.
