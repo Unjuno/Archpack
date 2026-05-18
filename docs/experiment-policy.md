@@ -34,9 +34,9 @@ Only features that prove they belong in the release body should be promoted.
 
 The MVP repository is used to:
 
-- prove the smallest useful loop,
+- prove the core loop,
 - keep validation files and examples,
-- test candidate features,
+- test candidate plugins,
 - collect user-story-map problems,
 - compare one-feature experiments.
 
@@ -63,14 +63,16 @@ Each experiment should focus on exactly one feature or one problem.
 
 Good examples:
 
+- Try `AGENTS.md` generation only.
+- Try effective inherited `AGENTS.md` generation only.
 - Try generated-file drift checks only.
-- Try clean-up of generated `AGENTS.md` only.
+- Try clean-up of generated files only.
 - Try a simple reference check only.
 - Try a static network-call detector only.
 
 Bad examples:
 
-- Add drift checks, repair, clean-up, and network checks together.
+- Add AGENTS generation, drift checks, repair, clean-up, and network checks together.
 - Redesign the pack format while adding a new feature.
 - Add a feature without a concrete observed problem.
 
@@ -81,19 +83,13 @@ Bad examples:
 ```text
 MVP validation repo
 → concrete problem from user story map
-→ one-feature fork or branch
+→ one-feature fork, branch, or small repo
 → smallest experiment
 → review behavior and complexity
 → promote to release body, revise, or discard
 ```
 
-The experiment can live in:
-
-- a fork,
-- a branch,
-- or a small separate repository.
-
-It should remain isolated until reviewed.
+The experiment should remain isolated until reviewed.
 
 ---
 
@@ -160,12 +156,12 @@ user story map
 
 ## 9. First rule
 
-Do not expand the release body before the MVP loop works.
+Do not expand the release body before the core MVP works.
 
-The MVP loop remains:
+The core MVP remains:
 
 ```text
-pack → file tree → local AGENTS.md → effective AGENTS.md
+pack → file tree
 ```
 
-After that, experiments may be generated in quantity, but only reviewed and accepted features should enter the release body.
+After that, plugin experiments may be generated in quantity, but only reviewed and accepted behavior should enter the release body.
