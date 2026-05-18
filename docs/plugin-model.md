@@ -46,9 +46,11 @@ Archpack may use a project-local directory:
 .archpack/
 ```
 
-This directory is for Archpack metadata and project-local configuration.
+This directory is for Archpack metadata, project-local settings, and future plugin state.
 
-Possible future contents:
+The directory must not be flat if plugins are expected to grow.
+
+Flat layout is rejected:
 
 ```text
 .archpack/
@@ -58,11 +60,63 @@ Possible future contents:
 └─ lock.yml
 ```
 
-The exact files are not fixed yet.
+This mixes core state and plugin state and will become unclear as plugins increase.
 
 ---
 
-## 3. Why not an APT-like package manager now
+## 3. Recommended local layout
+
+Use separated areas for core and plugins:
+
+```text
+.archpack/
+├─ core/
+│  ├─ config.yml
+│  ├─ manifest.yml
+│  └─ lock.yml
+└─ plugins/
+   ├─ index.yml
+   ├─ agents/
+   │  ├─ config.yml
+   │  ├─ manifest.yml
+   │  └─ lock.yml
+   ├─ ref-audit/
+   │  ├─ config.yml
+   │  ├─ manifest.yml
+   │  └─ lock.yml
+   └─ network-audit/
+      ├─ config.yml
+      ├─ manifest.yml
+      └─ lock.yml
+```
+
+The exact files are not fixed yet.
+
+The important rule is structural separation:
+
+- core state belongs under `.archpack/core/`,
+- plugin index belongs under `.archpack/plugins/index.yml`,
+- each plugin owns its own `.archpack/plugins/<plugin-name>/` directory.
+
+---
+
+## 4. Why this layout
+
+A nested layout gives each plugin a clear namespace.
+
+It avoids:
+
+- collisions between plugin files,
+- one large shared `plugins.yml`,
+- unclear ownership of `manifest.yml` and `lock.yml`,
+- accidental coupling between unrelated plugins,
+- migration pain when plugins need their own state.
+
+Each plugin can manage its own local state without changing the core directory structure.
+
+---
+
+## 5. Why not an APT-like package manager now
 
 An APT-like package manager is too large for the MVP.
 
@@ -78,29 +132,44 @@ It would introduce questions that are not needed yet:
 
 Those may become useful later, but they should not be part of the core MVP.
 
+The first step is not package management.
+
+The first step is local plugin namespacing.
+
 ---
 
-## 4. Recommended first model
+## 6. Recommended first model
 
-Start with a simple project-local plugin declaration.
+Start with local plugin declaration and local plugin state.
 
 Example direction:
 
 ```yaml
+# .archpack/plugins/index.yml
 plugins:
   - name: agents
     enabled: true
+    state_dir: agents
 ```
 
 This does not require a package manager.
 
-It only says which known plugin behavior should run for this project.
+It only says which known plugin behavior should run for this project and where that plugin may store its project-local state.
 
 ---
 
-## 5. First plugin candidate: AGENTS.md generator
+## 7. First plugin candidate: AGENTS.md generator
 
 `AGENTS.md` generation should be treated as a plugin candidate, not core behavior.
+
+Possible local state:
+
+```text
+.archpack/plugins/agents/
+├─ config.yml
+├─ manifest.yml
+└─ lock.yml
+```
 
 The plugin may eventually read pack sections such as:
 
@@ -126,7 +195,7 @@ A later extension may generate effective inherited `AGENTS.md` files.
 
 ---
 
-## 6. Plugin promotion rule
+## 8. Plugin promotion rule
 
 A plugin should be promoted only if:
 
@@ -138,7 +207,7 @@ A plugin should be promoted only if:
 
 ---
 
-## 7. Deferred package management
+## 9. Deferred package management
 
 A real package manager can be reconsidered only after there are multiple useful plugins.
 
