@@ -63,18 +63,31 @@ A user can prepare one pack file, run Archpack, and obtain the described file tr
 
 We want the pack to specify where `AGENTS.md` files should be placed.
 
-`AGENTS.md` should not be root-only.
-It should be possible to place it in selected directories.
+A project root `AGENTS.md` is expected.
+Additional `AGENTS.md` files can be generated in selected subdirectories.
 
-Example:
+Example with multiple depths:
 
 ```text
 project/
 ├─ AGENTS.md
 ├─ src/
-│  └─ AGENTS.md
-└─ lab/
-   └─ AGENTS.md
+│  ├─ AGENTS.md
+│  ├─ app.py
+│  └─ services/
+│     ├─ AGENTS.md
+│     ├─ user_service.py
+│     └─ auth/
+│        ├─ AGENTS.md
+│        └─ password_service.py
+├─ lab/
+│  ├─ AGENTS.md
+│  ├─ index.html
+│  ├─ style.css
+│  └─ app.js
+└─ docs/
+   ├─ AGENTS.md
+   └─ architecture.md
 ```
 
 ### Why this matters
@@ -86,7 +99,11 @@ Directory-level `AGENTS.md` files allow responsibility to be separated explicitl
 
 ### Desired state
 
-A user can define local agent rules for each important directory, and Archpack can generate `AGENTS.md` files at those locations.
+A user can define local agent rules for the project root and for each important directory.
+Archpack can generate `AGENTS.md` files at those locations.
+
+The root `AGENTS.md` carries broad project-wide constraints.
+Lower directories carry local rules for their own responsibilities.
 
 ### Writing policy
 
@@ -127,15 +144,19 @@ The agent should not be forced to reconstruct the full parent-child instruction 
 
 ### Desired state
 
-If the root has broad rules and a child directory has local rules, the generated child `AGENTS.md` contains both.
+If the root has broad rules and nested directories have local rules, each generated child `AGENTS.md` contains the effective rule set for that directory.
 
-Example:
+The deeper the directory is, the more specific the effective instruction file becomes.
+
+---
+
+## 5. Effective AGENTS.md example: two levels
 
 Root local rules:
 
 ```md
-- Do not add external network calls.
-- Do not edit `.github/workflows/*`.
+- Do not add external network calls unless explicitly allowed.
+- Do not edit `.github/workflows/*` unless the task is about CI.
 ```
 
 `lab/` local rules:
@@ -148,30 +169,137 @@ Root local rules:
 Generated `lab/AGENTS.md`:
 
 ```md
-- Do not add external network calls.
-- Do not edit `.github/workflows/*`.
+- Do not add external network calls unless explicitly allowed.
+- Do not edit `.github/workflows/*` unless the task is about CI.
 - Edit only `lab/index.html`, `lab/style.css`, and `lab/app.js` unless explicitly instructed.
 - Keep the lab static.
 ```
 
-### Responsibility model
+The generated lower-level file contains the root constraints plus the local directory constraints.
+
+---
+
+## 6. Effective AGENTS.md example: three levels
+
+This example shows why one-level examples are insufficient.
+
+Directory tree:
+
+```text
+project/
+├─ AGENTS.md
+└─ src/
+   ├─ AGENTS.md
+   └─ services/
+      ├─ AGENTS.md
+      └─ auth/
+         ├─ AGENTS.md
+         └─ password_service.py
+```
+
+Root local rules:
+
+```md
+- Do not add external network calls unless explicitly allowed.
+- Do not store secrets in source files.
+- Keep generated architecture files small and reviewable.
+```
+
+`src/` local rules:
+
+```md
+- Keep application logic inside `src/`.
+- Do not place documentation-only files under `src/`.
+```
+
+Generated `src/AGENTS.md`:
+
+```md
+- Do not add external network calls unless explicitly allowed.
+- Do not store secrets in source files.
+- Keep generated architecture files small and reviewable.
+- Keep application logic inside `src/`.
+- Do not place documentation-only files under `src/`.
+```
+
+`src/services/` local rules:
+
+```md
+- Put business rules in service modules, not in UI or route handlers.
+- Do not access the database directly from outside the service boundary.
+```
+
+Generated `src/services/AGENTS.md`:
+
+```md
+- Do not add external network calls unless explicitly allowed.
+- Do not store secrets in source files.
+- Keep generated architecture files small and reviewable.
+- Keep application logic inside `src/`.
+- Do not place documentation-only files under `src/`.
+- Put business rules in service modules, not in UI or route handlers.
+- Do not access the database directly from outside the service boundary.
+```
+
+`src/services/auth/` local rules:
+
+```md
+- Do not bypass authentication checks.
+- Do not weaken password or session validation.
+- Add tests when changing authentication behavior.
+```
+
+Generated `src/services/auth/AGENTS.md`:
+
+```md
+- Do not add external network calls unless explicitly allowed.
+- Do not store secrets in source files.
+- Keep generated architecture files small and reviewable.
+- Keep application logic inside `src/`.
+- Do not place documentation-only files under `src/`.
+- Put business rules in service modules, not in UI or route handlers.
+- Do not access the database directly from outside the service boundary.
+- Do not bypass authentication checks.
+- Do not weaken password or session validation.
+- Add tests when changing authentication behavior.
+```
+
+### What this example shows
+
+- The root `AGENTS.md` is the project-wide base.
+- Each lower directory adds local responsibility.
+- A generated lower-level `AGENTS.md` is an effective file, not only the local fragment.
+- The result stays readable when each layer contributes only a small number of rules.
+
+---
+
+## 7. Responsibility model
 
 This gives a clear separation:
 
-- parent directories define broad constraints,
-- child directories define local responsibilities,
+- root `AGENTS.md` defines broad project-wide constraints,
+- first-level directory `AGENTS.md` defines major area responsibilities,
+- second- and third-level directory `AGENTS.md` defines local operational constraints,
 - generated lower-level `AGENTS.md` files carry the effective rule set.
 
-### Still undecided
+This makes the intended responsibility boundary explicit without forcing a single large root instruction file.
+
+---
+
+## 8. Still undecided for effective AGENTS.md
+
+The roadmap does not yet decide the following:
 
 - How to detect that a child rule weakens a parent rule.
 - Whether weakening detection is manual, rule-based, or postponed.
 - Whether the effective file should include section headers showing inherited and local rules.
 - Whether duplicate inherited rules should be collapsed.
+- Whether effective `AGENTS.md` has a separate hard line limit from local rule blocks.
+- Whether root `AGENTS.md` is mandatory in all packs or only mandatory for recommended packs.
 
 ---
 
-## 5. Stage 4: prove the smallest useful loop
+## 9. Stage 4: prove the smallest useful loop
 
 ### What we want
 
@@ -194,19 +322,23 @@ It can already:
 
 ### Desired state
 
-A small example pack can demonstrate the whole loop.
+A small example pack can demonstrate the whole loop across at least three levels:
+
+```text
+project → src → services → auth
+```
 
 The example should be simple enough that a reader can understand the result without needing the implementation internals.
 
 ### Still undecided
 
-- The example project shape.
+- The exact example project shape.
 - Whether the example should be generic or based on an actual project pattern.
 - Whether CI is added at this stage or after the first implementation exists.
 
 ---
 
-## 6. Stage 5: document the first stable format
+## 10. Stage 5: document the first stable format
 
 ### What we want
 
@@ -237,12 +369,12 @@ A reader can understand:
 
 ---
 
-## 7. Deferred candidates
+## 11. Deferred candidates
 
 The following ideas are useful, but they are not part of the confirmed first roadmap.
 They should stay deferred until the smallest useful loop works.
 
-### 7.1 Generated-file drift check
+### 11.1 Generated-file drift check
 
 Possible future direction:
 
@@ -257,7 +389,7 @@ Unresolved questions:
 - Is checking hash-based, line-based, or rule-based?
 - What metadata is necessary?
 
-### 7.2 Repair
+### 11.2 Repair
 
 Possible future direction:
 
@@ -271,7 +403,7 @@ Unresolved questions:
 - What must remain human-owned?
 - How does repair avoid overwriting intentional edits?
 
-### 7.3 Clean-up
+### 11.3 Clean-up
 
 Possible future direction:
 
@@ -285,7 +417,7 @@ Unresolved questions:
 - What metadata is required?
 - What is the exact clean target group model?
 
-### 7.4 Reference monitoring
+### 11.4 Reference monitoring
 
 Possible future direction:
 
@@ -299,7 +431,7 @@ Unresolved questions:
 - Is AST parsing required?
 - Is grep-level detection acceptable initially?
 
-### 7.5 Network monitoring
+### 11.5 Network monitoring
 
 Possible future direction:
 
@@ -313,7 +445,7 @@ Unresolved questions:
 - How are allowed domains declared?
 - How are false positives handled?
 
-### 7.6 Semantic architecture drift
+### 11.6 Semantic architecture drift
 
 Possible future direction:
 
@@ -329,7 +461,7 @@ Unresolved questions:
 
 ---
 
-## 8. Roadmap discipline
+## 12. Roadmap discipline
 
 Do not move deferred candidates into the active roadmap until the confirmed loop works:
 
