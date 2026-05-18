@@ -1,82 +1,63 @@
 # Archpack roadmap
 
-## 0. Position of this document
+## 0. Purpose
 
-This document describes what Archpack is intended to become, step by step.
+This roadmap describes what Archpack should become, step by step.
 
-It is not an implementation specification.
-It is not a command reference.
-It is not a finalized schema document.
+It is not an implementation spec, command reference, or finalized schema.
 
-The purpose of this roadmap is to keep the project direction clear before implementation begins.
+Archpack should first prove one small loop:
 
----
+```text
+pack → file tree → local AGENTS.md → effective AGENTS.md
+```
 
-## 1. Overall direction
-
-Archpack starts from a small idea:
-
-> Read one architecture pack file and generate the file structure described by it.
-
-From there, Archpack should gradually become a tool for preparing explicit architecture context for AI-assisted coding.
-
-The important point is that Archpack should grow in layers.
-Each layer should solve one clear problem before the next layer is added.
+Anything beyond that stays deferred until real use shows a concrete need.
 
 ---
 
-## 2. Stage 1: generate a file tree from one pack
+## 1. Stage 1: generate a file tree
 
-### What we want
+### Goal
 
-We want to write one pack file and generate a project file structure from it.
+Write one pack file and generate a project file structure from it.
 
-The pack should be able to describe:
+The pack should describe:
 
 - directories,
 - files,
 - file contents.
 
-### Why this matters
+### Why
 
-The first value of Archpack is not AI control.
 The first value is reproducible structure generation.
 
-Instead of manually splitting one generated architecture document into many files, Archpack should create those files directly.
+Instead of manually splitting one architecture document into many files, Archpack should create those files directly.
 
-### Desired state
+### Undecided
 
-A user can prepare one pack file, run Archpack, and obtain the described file tree.
-
-### Still undecided
-
-- The exact pack schema.
-- The exact command name and arguments.
-- The overwrite policy.
-- The generated marker policy.
+- Exact pack schema.
+- Command names and arguments.
+- Overwrite policy.
+- Generated marker policy.
 
 ---
 
-## 3. Stage 2: generate AGENTS.md in selected directories
+## 2. Stage 2: generate AGENTS.md in selected directories
 
-### What we want
+### Goal
 
-We want the pack to specify where `AGENTS.md` files should be placed.
+Generate `AGENTS.md` at the project root and selected subdirectories.
 
-A project root `AGENTS.md` is expected.
-Additional `AGENTS.md` files can be generated in selected subdirectories.
-
-Example with multiple depths:
+Example:
 
 ```text
 project/
 ├─ AGENTS.md
 ├─ src/
 │  ├─ AGENTS.md
-│  ├─ app.py
 │  └─ services/
 │     ├─ AGENTS.md
-│     ├─ user_service.py
 │     └─ auth/
 │        ├─ AGENTS.md
 │        └─ password_service.py
@@ -90,162 +71,63 @@ project/
    └─ architecture.md
 ```
 
-### Why this matters
+### Why
 
-Different parts of a project have different responsibilities.
-A single root `AGENTS.md` can become too long and too vague.
+A single root `AGENTS.md` becomes too broad.
 
-Directory-level `AGENTS.md` files allow responsibility to be separated explicitly.
+Directory-level files separate responsibilities:
 
-### Desired state
-
-A user can define local agent rules for the project root and for each important directory.
-Archpack can generate `AGENTS.md` files at those locations.
-
-The root `AGENTS.md` carries broad project-wide constraints.
-Lower directories carry local rules for their own responsibilities.
+- root: project-wide constraints,
+- first-level directories: major area rules,
+- deeper directories: local operational rules.
 
 ### Writing policy
 
-Agent instructions should be short.
-
-- Prefer bullet points.
+- Use bullet points.
 - Prefer one rule per line.
 - Avoid long paragraphs.
-- Keep each local rule block around 10 to 30 lines when possible.
-- Use 50 lines as the rough upper limit for a local instruction block.
-
-### Still undecided
-
-- Whether the line limit is enforced immediately or treated as a warning first.
-- Whether local rules are stored directly in the pack or referenced from another document.
-- How much metadata each generated `AGENTS.md` should contain.
+- Keep local rule blocks short.
+- Use 50 lines as a rough upper limit.
 
 ---
 
-## 4. Stage 3: generate effective AGENTS.md by inheritance
+## 3. Stage 3: generate effective AGENTS.md
 
-### What we want
+### Goal
 
-We want lower-level `AGENTS.md` files to include both:
-
-1. inherited parent rules,
-2. local child rules.
-
-This means a lower directory can receive an effective `AGENTS.md` that already contains the relevant upper-level constraints.
-
-### Why this matters
-
-This is an optimistic design assumption:
-
-> If an agent is more likely to follow instructions that are explicitly present in the file it reads, then lower-level `AGENTS.md` files should contain the inherited effective rules directly.
-
-The agent should not be forced to reconstruct the full parent-child instruction chain on its own.
-
-### Desired state
-
-If the root has broad rules and nested directories have local rules, each generated child `AGENTS.md` contains the effective rule set for that directory.
-
-The deeper the directory is, the more specific the effective instruction file becomes.
-
----
-
-## 5. Effective AGENTS.md example: two levels
-
-Root local rules:
-
-```md
-- Do not add external network calls unless explicitly allowed.
-- Do not edit `.github/workflows/*` unless the task is about CI.
-```
-
-`lab/` local rules:
-
-```md
-- Edit only `lab/index.html`, `lab/style.css`, and `lab/app.js` unless explicitly instructed.
-- Keep the lab static.
-```
-
-Generated `lab/AGENTS.md`:
-
-```md
-- Do not add external network calls unless explicitly allowed.
-- Do not edit `.github/workflows/*` unless the task is about CI.
-- Edit only `lab/index.html`, `lab/style.css`, and `lab/app.js` unless explicitly instructed.
-- Keep the lab static.
-```
-
-The generated lower-level file contains the root constraints plus the local directory constraints.
-
----
-
-## 6. Effective AGENTS.md example: three levels
-
-This example shows why one-level examples are insufficient.
-
-Directory tree:
+Generate lower-level `AGENTS.md` files as effective instruction files:
 
 ```text
-project/
-├─ AGENTS.md
-└─ src/
-   ├─ AGENTS.md
-   └─ services/
-      ├─ AGENTS.md
-      └─ auth/
-         ├─ AGENTS.md
-         └─ password_service.py
+parent rules + local rules = effective AGENTS.md
 ```
+
+This makes inherited constraints explicit where the agent is likely to read them.
+
+### Example
 
 Root local rules:
 
 ```md
 - Do not add external network calls unless explicitly allowed.
 - Do not store secrets in source files.
-- Keep generated architecture files small and reviewable.
 ```
 
 `src/` local rules:
 
 ```md
 - Keep application logic inside `src/`.
-- Do not place documentation-only files under `src/`.
-```
-
-Generated `src/AGENTS.md`:
-
-```md
-- Do not add external network calls unless explicitly allowed.
-- Do not store secrets in source files.
-- Keep generated architecture files small and reviewable.
-- Keep application logic inside `src/`.
-- Do not place documentation-only files under `src/`.
 ```
 
 `src/services/` local rules:
 
 ```md
-- Put business rules in service modules, not in UI or route handlers.
-- Do not access the database directly from outside the service boundary.
-```
-
-Generated `src/services/AGENTS.md`:
-
-```md
-- Do not add external network calls unless explicitly allowed.
-- Do not store secrets in source files.
-- Keep generated architecture files small and reviewable.
-- Keep application logic inside `src/`.
-- Do not place documentation-only files under `src/`.
-- Put business rules in service modules, not in UI or route handlers.
-- Do not access the database directly from outside the service boundary.
+- Put business rules in service modules.
 ```
 
 `src/services/auth/` local rules:
 
 ```md
 - Do not bypass authentication checks.
-- Do not weaken password or session validation.
 - Add tests when changing authentication behavior.
 ```
 
@@ -254,221 +136,88 @@ Generated `src/services/auth/AGENTS.md`:
 ```md
 - Do not add external network calls unless explicitly allowed.
 - Do not store secrets in source files.
-- Keep generated architecture files small and reviewable.
 - Keep application logic inside `src/`.
-- Do not place documentation-only files under `src/`.
-- Put business rules in service modules, not in UI or route handlers.
-- Do not access the database directly from outside the service boundary.
+- Put business rules in service modules.
 - Do not bypass authentication checks.
-- Do not weaken password or session validation.
 - Add tests when changing authentication behavior.
 ```
 
-### What this example shows
+### Undecided
 
-- The root `AGENTS.md` is the project-wide base.
-- Each lower directory adds local responsibility.
-- A generated lower-level `AGENTS.md` is an effective file, not only the local fragment.
-- The result stays readable when each layer contributes only a small number of rules.
-
----
-
-## 7. Responsibility model
-
-This gives a clear separation:
-
-- root `AGENTS.md` defines broad project-wide constraints,
-- first-level directory `AGENTS.md` defines major area responsibilities,
-- second- and third-level directory `AGENTS.md` defines local operational constraints,
-- generated lower-level `AGENTS.md` files carry the effective rule set.
-
-This makes the intended responsibility boundary explicit without forcing a single large root instruction file.
+- How to detect child rules that weaken parent rules.
+- Whether to include inherited/local section headers.
+- Whether to collapse duplicate rules.
+- Whether effective files need a separate hard line limit.
 
 ---
 
-## 8. Still undecided for effective AGENTS.md
+## 4. Stage 4: prove the smallest useful loop
 
-The roadmap does not yet decide the following:
+### Goal
 
-- How to detect that a child rule weakens a parent rule.
-- Whether weakening detection is manual, rule-based, or postponed.
-- Whether the effective file should include section headers showing inherited and local rules.
-- Whether duplicate inherited rules should be collapsed.
-- Whether effective `AGENTS.md` has a separate hard line limit from local rule blocks.
-- Whether root `AGENTS.md` is mandatory in all packs or only mandatory for recommended packs.
-
----
-
-## 9. Stage 4: prove the smallest useful loop
-
-### What we want
-
-We want to prove the smallest useful Archpack loop:
+Demonstrate the loop with a small example pack:
 
 ```text
 pack → file tree → local AGENTS.md → effective AGENTS.md
 ```
 
-### Why this matters
-
-This is the point where Archpack becomes useful without becoming large.
-
-It can already:
-
-- generate structure,
-- place agent instructions,
-- separate directory responsibilities,
-- make inherited constraints explicit.
-
-### Desired state
-
-A small example pack can demonstrate the whole loop across at least three levels:
+The example should include at least three levels, such as:
 
 ```text
 project → src → services → auth
 ```
 
-The example should be simple enough that a reader can understand the result without needing the implementation internals.
+### Success state
 
-### Still undecided
+A reader can inspect the pack and generated output and understand:
 
-- The exact example project shape.
-- Whether the example should be generic or based on an actual project pattern.
-- Whether CI is added at this stage or after the first implementation exists.
-
----
-
-## 10. Stage 5: document the first stable format
-
-### What we want
-
-After the smallest loop is proven, the pack format should be documented.
-
-The format document should explain only the fields that are actually used.
-
-### Why this matters
-
-The schema should follow the working concept, not the other way around.
-
-Writing too much schema before the first useful loop is proven will create fake precision.
-
-### Desired state
-
-A reader can understand:
-
-- how to define files,
-- how to define local directory rules,
-- how inherited `AGENTS.md` generation works,
-- what is intentionally not supported yet.
-
-### Still undecided
-
-- Whether schema validation is required immediately.
-- Whether to publish a formal JSON Schema later.
-- Whether to version the pack format from the start.
+- what files were generated,
+- where `AGENTS.md` was placed,
+- how inherited rules accumulated,
+- why responsibility is separated by directory.
 
 ---
 
-## 11. Deferred candidates
+## 5. Stage 5: document the first stable format
 
-The following ideas are useful, but they are not part of the confirmed first roadmap.
-They should stay deferred until the smallest useful loop works.
+### Goal
 
-### 11.1 Generated-file drift check
+After the smallest loop works, document only the fields that are actually used.
 
-Possible future direction:
+### Why
 
-- Check whether generated files still exist.
-- Check whether generated `AGENTS.md` files still match the pack.
-- Check whether inherited rules are still present in effective `AGENTS.md` files.
+The schema should follow the working concept.
 
-Unresolved questions:
-
-- Which files are strict?
-- Which files are allowed to change?
-- Is checking hash-based, line-based, or rule-based?
-- What metadata is necessary?
-
-### 11.2 Repair
-
-Possible future direction:
-
-- Restore missing generated files.
-- Restore damaged generated `AGENTS.md` files.
-- Restore generated metadata if such metadata exists.
-
-Unresolved questions:
-
-- What should be repaired automatically?
-- What must remain human-owned?
-- How does repair avoid overwriting intentional edits?
-
-### 11.3 Clean-up
-
-Possible future direction:
-
-- Remove temporary generated `AGENTS.md` files.
-- Remove generated file-level agent instruction files.
-- Refuse to delete handwritten files.
-
-Unresolved questions:
-
-- What generated marker is required?
-- What metadata is required?
-- What is the exact clean target group model?
-
-### 11.4 Reference monitoring
-
-Possible future direction:
-
-- Detect forbidden dependency directions.
-- Detect direct imports across forbidden layers.
-- Compare declared architecture boundaries with actual references.
-
-Unresolved questions:
-
-- Which language is supported first?
-- Is AST parsing required?
-- Is grep-level detection acceptable initially?
-
-### 11.5 Network monitoring
-
-Possible future direction:
-
-- Detect unwanted external calls.
-- Separate request-time network policy from background-job network policy.
-- Allow declared domains only in declared areas.
-
-Unresolved questions:
-
-- Is detection static or runtime-based?
-- How are allowed domains declared?
-- How are false positives handled?
-
-### 11.6 Semantic architecture drift
-
-Possible future direction:
-
-- Detect files taking on responsibilities outside their declared role.
-- Detect removed or deferred features being reintroduced.
-- Detect contradictions between instructions and implementation.
-
-Unresolved questions:
-
-- Is an LLM required?
-- Can this be tested reliably in CI?
-- What review process handles false positives?
+Writing a large schema first would create fake precision.
 
 ---
 
-## 12. Roadmap discipline
+## 6. Deferred candidates
 
-Do not move deferred candidates into the active roadmap until the confirmed loop works:
+These are useful but not confirmed for the first version.
+
+They should be considered only after MVP use reveals concrete problems.
+
+- Generated-file drift check.
+- Repair.
+- Clean-up.
+- Reference monitoring.
+- Network monitoring.
+- Semantic architecture drift checks.
+- File-level `*.agent.md`.
+- Formal schema validation.
+- CI integration.
+
+---
+
+## 7. Discipline
+
+Do not expand the roadmap before the small loop works.
+
+First prove:
 
 ```text
 pack → file tree → local AGENTS.md → effective AGENTS.md
 ```
 
-The first useful version should be small enough to build, inspect, and revise.
-
-Anything beyond that must be justified by a concrete problem observed during use.
+Then collect user problems with the user story map and decide the next feature.
