@@ -4,59 +4,73 @@
 
 This document defines the creation roadmap before implementation.
 
-The goal is not to implement everything at once. The goal is to define a staged path from a minimal file-structure generator to an architecture-control tool for AI-assisted coding workflows.
+The first roadmap must stay narrow. It should describe the path to the smallest useful Archpack prototype, not every later monitoring feature.
 
-Archpack starts from a simple idea:
+The starting idea is:
 
 > Read one architecture pack file and generate the file structure described by it.
 
-After that, Archpack adds generated `AGENTS.md` files, architecture drift checks, repair, clean-up, and later reference/network monitoring.
+The first useful extension is:
+
+> Generate directory-level `AGENTS.md` files from the same pack, including inherited parent instructions when needed.
+
+Features such as generated-file drift checks, repair, clean-up, reference monitoring, and network monitoring are intentionally moved to the final future-candidates section because many details are still undecided.
 
 ---
 
 ## 1. Core idea
 
-Archpack manages project architecture as a pack.
+Archpack starts as a controlled file-structure generator.
 
-A pack should be able to describe:
+A pack should eventually be able to describe:
 
 - directories to create,
 - files to create,
 - file contents,
-- which generated files are temporary,
 - where `AGENTS.md` files should be placed,
-- how parent and child agent instructions should be combined,
-- which generated files should be audited,
-- which generated files can be repaired,
-- which generated files can be cleaned later.
+- local rules for each `AGENTS.md`,
+- how parent and child agent instructions should be combined.
 
-The first implementation must stay narrow. It should not become a general project generator or an automatic code-repair tool.
+The first implementation must not become a full architecture governance framework. It should first prove that one file can generate a useful project structure and useful agent instructions.
 
 ---
 
-## 2. MVP stage 1: file tree generation
+## 2. Confirmed MVP scope
+
+The MVP scope is limited to the following sequence:
+
+```text
+architecture-pack file
+→ file tree generation
+→ directory-level AGENTS.md generation
+→ effective AGENTS.md generation by parent-to-child rule composition
+```
+
+This means the MVP should answer only these questions:
+
+1. Can Archpack read a pack file?
+2. Can Archpack create the described file structure?
+3. Can Archpack generate `AGENTS.md` files in specified directories?
+4. Can Archpack compose parent and child agent rules into lower-level effective `AGENTS.md` files?
+
+Everything beyond this is deliberately deferred.
+
+---
+
+## 3. Stage 1: arbitrary file tree generation
 
 ### Goal
 
-Read an arbitrary architecture pack file and generate the file structure described by that file.
+Read an architecture pack file and generate the file structure described by that file.
 
 ### Required behavior
 
-- Read a pack file.
+- Read one pack file.
 - Create directories described by the pack.
 - Create files described by the pack.
 - Write file contents described by the pack.
 - Avoid unsafe path writes.
 - Avoid overwriting existing files unless explicitly allowed.
-
-### Out of scope
-
-- Agent instruction inheritance.
-- Architecture drift detection.
-- Repair.
-- Clean.
-- Reference monitoring.
-- Network monitoring.
 
 ### Acceptance criteria
 
@@ -64,13 +78,22 @@ Read an arbitrary architecture pack file and generate the file structure describ
 - Dangerous paths are rejected.
 - Existing files are not overwritten by default.
 
+### Out of scope for this stage
+
+- `AGENTS.md` inheritance.
+- Drift checks.
+- Repair.
+- Clean-up.
+- Reference monitoring.
+- Network monitoring.
+
 ---
 
-## 3. MVP stage 2: generated agent instruction files
+## 4. Stage 2: directory-level AGENTS.md generation
 
 ### Goal
 
-Allow the pack to specify `AGENTS.md` files for selected directories.
+Allow the pack to specify local agent instructions for selected directories.
 
 `AGENTS.md` is not root-only. It can be generated in any directory specified by the pack.
 
@@ -87,48 +110,63 @@ project/
 
 ### Required behavior
 
-- Generate `AGENTS.md` at each specified directory.
-- Treat directory-level `AGENTS.md` as applying to that directory and its descendants.
-- Keep each local instruction block short.
-- Prefer bullet-point format.
+- The pack can define local agent rules for a directory.
+- Archpack can generate `AGENTS.md` in that directory.
+- Directory-level `AGENTS.md` applies to that directory and its descendants.
+- Rules should be written as bullet points.
 - Prefer one rule per line.
+- Keep local rule blocks short.
 
-### Instruction size rule
+### Local instruction size rule
 
 Each local instruction block should be at most 50 lines.
 
-This limit exists because parent and child instructions may both be read by an agent. Long instruction files become design documents and should be moved into persistent docs instead.
+This is a design limit, not a target. A good local block should often be much shorter.
+
+### Rationale
+
+`AGENTS.md` should not become a long architecture document.
+
+It should be a short instruction index for coding agents.
+
+Long explanations should move to persistent documents such as `ARCHITECTURE.md`, ADRs, or other docs.
 
 ---
 
-## 4. MVP stage 3: effective AGENTS.md generation
+## 5. Stage 3: effective AGENTS.md generation
 
 ### Goal
 
-When nested `AGENTS.md` files exist, generate the lower-level `AGENTS.md` as an effective instruction file containing:
+When nested directories have local agent instructions, generate the lower-level `AGENTS.md` as an effective instruction file.
 
-1. inherited parent instructions,
-2. plus local child instructions.
+An effective `AGENTS.md` contains:
 
-This is an optimistic strategy: if agents are more likely to follow instructions that are explicitly present in the file they read, then lower directories should contain the effective combined instruction set.
+1. inherited parent rules,
+2. plus local child rules.
 
-### Example
+This is an optimistic strategy:
 
-Root local instruction:
+> If agents are more likely to follow instructions that are explicitly present in the file they read, then lower directories should contain the combined effective instruction set.
+
+---
+
+## 6. Effective AGENTS.md example
+
+Root local rules:
 
 ```md
 - Do not add external network calls.
 - Do not edit `.github/workflows/*`.
 ```
 
-`lab/` local instruction:
+`lab/` local rules:
 
 ```md
 - Edit only `lab/index.html`, `lab/style.css`, and `lab/app.js` unless explicitly instructed.
 - Keep the lab static.
 ```
 
-Generated `lab/AGENTS.md` should contain the inherited root rules plus the local lab rules:
+Generated `lab/AGENTS.md`:
 
 ```md
 - Do not add external network calls.
@@ -136,20 +174,28 @@ Generated `lab/AGENTS.md` should contain the inherited root rules plus the local
 - Edit only `lab/index.html`, `lab/style.css`, and `lab/app.js` unless explicitly instructed.
 - Keep the lab static.
 ```
+
+The generated lower-level file contains the parent constraints plus the local directory constraints.
+
+---
+
+## 7. Effective AGENTS.md composition rules
 
 ### Required behavior
 
 - Process directory instructions from top to bottom.
 - Pass inherited rules to child directories.
 - Append child-local rules after inherited rules.
-- Prevent child instructions from weakening parent constraints.
-- Keep generated effective `AGENTS.md` short enough to remain useful.
+- Do not allow child rules to weaken parent rules.
+- Keep generated effective `AGENTS.md` compact.
 
 ### Expected size
 
-Local blocks should be around 10 to 30 lines.
+Local blocks should usually be around 10 to 30 lines.
 
-Even with several nested levels, the generated effective instruction file should stay reasonably small. A hard upper bound may be introduced later, but the design target is to keep effective instruction files compact.
+The generated effective file may be longer than a local block, but it should still stay readable.
+
+The current design assumes shallow nesting. If nesting becomes deep, the format must be revisited.
 
 ### Rationale
 
@@ -162,175 +208,46 @@ This separates responsibility while preserving explicitness:
 
 ---
 
-## 5. MVP stage 4: management metadata
+## 8. Stage 4: minimal implementation proof
 
 ### Goal
 
-Record what Archpack generated.
+Build only enough implementation to prove the three confirmed capabilities:
 
-This enables later audit, repair, and clean operations.
-
-### Required behavior
-
-- Record generated files.
-- Record which files are strict-managed.
-- Record which files are temporary agent instructions.
-- Record which files are cleanable.
-- Record target paths for file-level instructions if used later.
-
-### Candidate outputs
-
-```text
-.archpack/manifest.yml
-.archpack/lock.yml
-```
-
-The exact schema is not fixed in this roadmap.
-
----
-
-## 6. MVP stage 5: audit
-
-### Goal
-
-Check whether the generated architecture-control structure has drifted.
+1. file tree generation,
+2. directory-level `AGENTS.md` generation,
+3. effective `AGENTS.md` generation.
 
 ### Required checks
 
-- Required generated files still exist.
-- strict-managed generated files have not changed unexpectedly.
-- generated `AGENTS.md` files remain within the line limit.
-- generated files still have their generated marker.
-- child `AGENTS.md` does not weaken parent constraints.
-- cleanable files are still identifiable as generated files.
+- A sample pack generates a project tree.
+- A sample pack generates root `AGENTS.md`.
+- A sample pack generates child `AGENTS.md`.
+- A child `AGENTS.md` includes inherited parent rules.
+- Local rules are appended after inherited rules.
+- Unsafe paths are rejected.
 
-### Out of scope
+### Non-goal
 
-- Application correctness.
-- Runtime behavior.
-- Semantic architecture validation.
-- Import graph validation.
-- Network validation.
+This stage should not implement drift checking, repair, clean-up, reference checks, or network checks.
 
 ---
 
-## 7. MVP stage 6: repair
-
-### Goal
-
-Restore generated strict-managed files from the pack when they are missing or damaged.
-
-### Required behavior
-
-- Restore generated `AGENTS.md` files.
-- Restore generated control files.
-- Restore generated metadata files if possible.
-- Do not repair normal application source code.
-- Do not repair flexible or human-owned files.
-
-### Boundary
-
-Archpack repair is not code repair.
-
-It only repairs generated architecture-control files.
-
----
-
-## 8. MVP stage 7: clean
-
-### Goal
-
-Remove temporary agent instruction files safely.
-
-### Required behavior
-
-- Remove only files that Archpack generated.
-- Remove only files marked as removable.
-- Remove only files in the requested clean group.
-- Refuse to remove handwritten files.
-- Refuse to remove persistent architecture documents.
-
-### Cleanable examples
-
-- `AGENTS.md`
-- `src/AGENTS.md`
-- `lab/AGENTS.md`
-- `*.agent.md`
-
-### Non-cleanable examples
-
-- `ARCHITECTURE.md`
-- `docs/adr/*.md`
-- source files
-- test files
-- handwritten documents
-
----
-
-## 9. Post-MVP: reference monitoring
-
-After the MVP works, Archpack may add reference monitoring.
-
-Possible checks:
-
-- UI layer must not import database layer directly.
-- Service layer must not be bypassed.
-- Forbidden dependency directions must be detected.
-- Generated architecture rules should be compared against actual imports.
-
-This is deliberately post-MVP because it requires language-specific parsing or careful static analysis.
-
----
-
-## 10. Post-MVP: communication monitoring
-
-After reference monitoring, Archpack may add communication monitoring.
-
-Possible checks:
-
-- Static sites must not add `fetch` or external runtime calls.
-- Request-time code must not call external APIs.
-- Background jobs may have a different network policy from request-time paths.
-- Allowed and denied domains may be declared in the pack.
-
-This is post-MVP because network monitoring can quickly become language-, runtime-, and CI-dependent.
-
----
-
-## 11. Post-MVP: semantic architecture drift
-
-Later, Archpack may check whether files still match their declared responsibilities.
-
-Possible checks:
-
-- A file has taken on responsibilities outside its declared role.
-- A service boundary has been bypassed.
-- A removed/deferred feature has been reintroduced.
-- A file-level instruction contradicts the current implementation.
-
-This should not be part of the first implementation.
-
----
-
-## 12. Current implementation order
+## 9. Current implementation order
 
 The implementation order should be:
 
-1. Create repository documentation.
-2. Define the minimum pack format.
+1. Keep the repository documentation minimal and accurate.
+2. Define the minimum pack format for file generation.
 3. Implement plain file-tree generation.
-4. Add generated `AGENTS.md` support.
+4. Add local `AGENTS.md` generation.
 5. Add parent-to-child effective `AGENTS.md` generation.
-6. Add metadata generation.
-7. Add audit.
-8. Add repair.
-9. Add clean.
-10. Add CI tests for the above.
-11. Only then consider reference or communication monitoring.
+6. Add tests for generated output.
+7. Only after this works, revisit monitoring and maintenance features.
 
 ---
 
-## 13. Non-goals for the first implementation
+## 10. Non-goals for the first implementation
 
 The first implementation must not attempt to:
 
@@ -338,13 +255,123 @@ The first implementation must not attempt to:
 - perform semantic code review,
 - monitor runtime network traffic,
 - parse all programming languages,
+- repair generated files,
+- clean generated files,
+- detect architecture drift,
 - replace human architecture review,
 - become a full project scaffolding framework,
 - become an AI-agent runtime.
 
-Archpack should first prove the smallest useful loop:
+The first implementation should prove only this loop:
 
 ```text
-pack → file tree → generated agent instructions → metadata → audit → repair → clean
+pack → file tree → local AGENTS.md → effective AGENTS.md
 ```
 
+---
+
+## 11. Deferred candidates
+
+The following features are useful, but they are not confirmed for the first implementation.
+
+They should be considered only after the MVP above works.
+
+### 11.1 Generated-file drift check
+
+Possible future checks:
+
+- Generated files still exist.
+- Generated `AGENTS.md` files still match the pack.
+- Generated files still have a generated marker.
+- Effective `AGENTS.md` files still contain inherited parent rules.
+
+Unresolved questions:
+
+- Which generated files are strict?
+- Which generated files are allowed to change?
+- How much metadata is needed?
+- Should drift checking be line-based, hash-based, or rule-based?
+
+### 11.2 Repair
+
+Possible future behavior:
+
+- Restore missing generated files.
+- Restore damaged generated `AGENTS.md` files.
+- Restore generated metadata files if such metadata exists.
+
+Unresolved questions:
+
+- What should be repaired automatically?
+- What must remain human-owned?
+- How should repair avoid overwriting intentional edits?
+
+### 11.3 Clean-up
+
+Possible future behavior:
+
+- Remove temporary generated `AGENTS.md` files.
+- Remove generated file-level agent instruction files.
+- Refuse to delete handwritten files.
+
+Unresolved questions:
+
+- What generated marker is required?
+- What metadata is required?
+- What is the exact clean target group model?
+
+### 11.4 Reference monitoring
+
+Possible future checks:
+
+- UI layer must not import database layer directly.
+- Service layer must not be bypassed.
+- Forbidden dependency directions must be detected.
+
+Unresolved questions:
+
+- Which languages are supported first?
+- Is parsing AST required?
+- Is grep-level detection acceptable initially?
+
+### 11.5 Network monitoring
+
+Possible future checks:
+
+- Static sites must not add `fetch` or external runtime calls.
+- Request-time code must not call external APIs.
+- Background jobs may have different network policy from request-time code.
+
+Unresolved questions:
+
+- Is this static detection or runtime detection?
+- How should allowed domains be declared?
+- How should false positives be handled?
+
+### 11.6 Semantic architecture drift
+
+Possible future checks:
+
+- A file has taken on responsibilities outside its declared role.
+- A removed/deferred feature has been reintroduced.
+- A file-level instruction contradicts the current implementation.
+
+Unresolved questions:
+
+- Is an LLM required?
+- Can this be tested reliably in CI?
+- How should false positives be reviewed?
+
+---
+
+## 12. Roadmap discipline
+
+Do not promote deferred candidates into MVP until the confirmed MVP works.
+
+The confirmed MVP is intentionally small:
+
+```text
+pack → file tree → local AGENTS.md → effective AGENTS.md
+```
+
+Anything beyond that must be justified by a concrete problem observed during use.
