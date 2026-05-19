@@ -6,19 +6,19 @@ This roadmap describes the current direction of Archpack.
 
 It is not a command reference or a full implementation spec.
 
-The current MVP has proven this core loop:
+The current core loop is:
 
 ```text
 pack directory → file tree → explicit repair
 ```
 
-Everything beyond this core should be treated as a reviewed plugin candidate or a later experiment.
+Everything beyond this core should be treated as a reviewed plugin or a later experiment.
 
 ---
 
-## 1. Current MVP status
+## 1. Current core status
 
-The MVP is implemented as a small directory-pack tool.
+The core is implemented as a small directory-pack tool.
 
 A pack directory contains a `tree/` directory.
 Files under `tree/` are generated into an output directory.
@@ -31,7 +31,7 @@ examples/minimal-pack/
    └─ README.md
 ```
 
-Implemented commands:
+Implemented core commands:
 
 ```text
 archpack unpack <pack-dir> --out <dir>
@@ -94,7 +94,7 @@ The current safety policy is intentionally conservative.
 
 Archpack should not add every useful capability into the core.
 
-Plugin candidates should be handled in the same repository, but only after review.
+Plugins are handled in the same repository, but only after review.
 
 The current plugin intake policy is:
 
@@ -120,47 +120,53 @@ Plugins should not run implicitly during core `unpack` or `repair`.
 
 ---
 
-## 5. First plugin candidate: AGENTS.md generation
+## 5. Reviewed plugin: AGENTS.md generation
 
-The first plugin candidate is `AGENTS.md` generation.
+The first reviewed plugin is `AGENTS.md` generation.
 
-Candidate location:
+Location:
 
 ```text
 src/archpack/plugins/agents/
 ```
 
-Candidate descriptor:
+Descriptor:
 
 ```text
 src/archpack/plugins/agents/plugin.yml
 ```
 
-Possible future input:
+Usage guide:
 
-```yaml
-agent_rules:
-  - dir: .
-    rules:
-      - Keep instructions short.
-
-  - dir: src
-    rules:
-      - Keep application logic inside src.
+```text
+docs/plugins/agents.md
 ```
 
-Possible output:
+Input:
+
+```text
+agents.toml
+```
+
+Command:
+
+```text
+archpack agents-generate <pack-dir> --out <dir>
+archpack agents-generate <pack-dir> --out <dir> --overwrite
+```
+
+Output examples:
 
 ```text
 AGENTS.md
 src/AGENTS.md
 ```
 
-This must remain outside the core until reviewed as a plugin.
+This plugin remains outside the core and only runs through explicit command invocation.
 
 ---
 
-## 6. Second plugin candidate: effective AGENTS.md
+## 6. Next plugin candidate: effective AGENTS.md
 
 A later plugin extension may generate lower-level `AGENTS.md` files as effective instruction files:
 
@@ -208,7 +214,7 @@ plugin when optional
 remove when not worth maintaining
 ```
 
-The core MVP should remain easy to explain:
+The core should remain easy to explain:
 
 ```text
 pack directory → file tree → explicit repair
