@@ -59,7 +59,61 @@ tmp/out/src/AGENTS.md
 
 ---
 
-## 2. Plugin location
+## 2. Hierarchy notation
+
+Hierarchy is written with `dir` paths.
+
+Use `.` for the output root:
+
+```toml
+[[agents]]
+dir = "."
+rules = ["Root rule"]
+```
+
+Use slash-separated relative paths for child directories:
+
+```toml
+[[agents]]
+dir = "src"
+rules = ["Src rule"]
+
+[[agents]]
+dir = "src/services"
+rules = ["Services rule"]
+```
+
+This means:
+
+```text
+.
+└─ src
+   └─ services
+```
+
+Generated files:
+
+```text
+AGENTS.md
+src/AGENTS.md
+src/services/AGENTS.md
+```
+
+Inherited rule behavior:
+
+| `dir` | Generated file | Included rules |
+|---|---|---|
+| `.` | `AGENTS.md` | `.` |
+| `src` | `src/AGENTS.md` | `.` + `src` |
+| `src/services` | `src/services/AGENTS.md` | `.` + `src` + `src/services` |
+
+Do not use tab-indented trees inside `agents.toml`.
+Do not use absolute paths.
+Do not use `..` path escapes.
+
+---
+
+## 3. Plugin location
 
 The plugin lives under:
 
@@ -75,7 +129,7 @@ src/archpack/plugins/agents/plugin.yml
 
 ---
 
-## 3. Input file
+## 4. Input file
 
 The plugin reads:
 
@@ -115,7 +169,7 @@ Each `[[agents]]` block defines local rules for one directory.
 
 ---
 
-## 4. Rule limits
+## 5. Rule limits
 
 Each `[[agents]]` block is one local rule unit.
 
@@ -140,7 +194,7 @@ Reason:
 
 ---
 
-## 5. Effective generation
+## 6. Effective generation
 
 Generated files include inherited parent rules.
 
@@ -170,7 +224,7 @@ Effective rule behavior:
 
 ---
 
-## 6. Generate AGENTS.md files
+## 7. Generate AGENTS.md files
 
 Run:
 
@@ -189,7 +243,7 @@ If the input contains deeper directories, deeper `AGENTS.md` files are generated
 
 ---
 
-## 7. Default overwrite behavior
+## 8. Default overwrite behavior
 
 By default, existing `AGENTS.md` files are skipped.
 
@@ -208,7 +262,7 @@ Behavior:
 
 ---
 
-## 8. Explicit overwrite
+## 9. Explicit overwrite
 
 Use `--overwrite` only when you intentionally want to replace existing `AGENTS.md` files.
 
@@ -225,7 +279,7 @@ Behavior:
 
 ---
 
-## 9. What this plugin does not do
+## 10. What this plugin does not do
 
 This plugin does not:
 
@@ -240,7 +294,7 @@ Those behaviors require separate review before being added.
 
 ---
 
-## 10. Test coverage
+## 11. Test coverage
 
 Current tests cover:
 
