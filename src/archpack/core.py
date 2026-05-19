@@ -76,13 +76,16 @@ def destination_for(out_dir: Path, rel: Path) -> Path:
     return dest
 
 
-def unpack(pack_dir: Path, out_dir: Path) -> CopyResult:
+def unpack(pack_dir: Path, out_dir: Path, *, skip_existing: bool = False) -> CopyResult:
     written: list[Path] = []
     skipped: list[Path] = []
     out_dir = Path(out_dir)
     for source, rel in iter_pack_files(pack_dir):
         dest = destination_for(out_dir, rel)
         if dest.exists():
+            if skip_existing:
+                skipped.append(rel)
+                continue
             raise ExistingFileError(f"Refusing to overwrite existing file: {dest}")
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, dest)
