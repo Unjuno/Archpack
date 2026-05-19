@@ -1,0 +1,1 @@
+# Archpack plugin namespace
