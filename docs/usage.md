@@ -176,8 +176,19 @@ Current safety behavior:
 - Existing files are not overwritten by default.
 - Symlinks in the pack tree are rejected.
 - Parent-directory escape paths are rejected.
+- Pack paths use slash-separated POSIX-style relative paths.
+- Authored paths with `..`, duplicate slashes (`//`), backslashes (`\`), or Windows drive prefixes (`C:/...`) are rejected.
+- `agents.toml` `dir` values use the same path rules through the agents plugin.
 - Repair runs only when explicitly requested.
 - Plugins run only through explicit commands.
+
+See also:
+
+```text
+docs/format.md
+```
+
+for the core path validation summary.
 
 ---
 

@@ -126,6 +126,22 @@ Repair job:
 read source tree → compare output tree → restore requested generated files
 ```
 
+### Path validation
+
+Pack paths are treated as slash-separated relative POSIX paths.
+
+Rejected paths include:
+
+- absolute paths (`/tmp`, `\outside`)
+- parent segments (`..`, `src/../src`)
+- empty or duplicate slash segments (`src//services`)
+- backslashes in authored paths (`src\services`)
+- Windows drive paths (`C:/outside`)
+- symlinks under `tree/` (including a symlinked `tree/` directory itself)
+
+Core commands normalize filesystem paths from `tree/` to POSIX form before validation.
+Plugin `agents.toml` `dir` values are validated from the original string before `Path` normalization.
+
 ---
 
 ## 5. Repair policy
