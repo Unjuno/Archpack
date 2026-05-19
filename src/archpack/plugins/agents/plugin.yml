@@ -3,6 +3,9 @@ name: AGENTS.md generator
 status: experimental
 summary: Generate AGENTS.md files from local rules declared in agents.toml.
 
+docs:
+  usage: docs/plugins/agents.md
+
 commands:
   - name: agents-generate
     help: Generate AGENTS.md files from agents.toml.
