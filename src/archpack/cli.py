@@ -48,10 +48,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "unpack":
-            if args.skip_existing:
-                result = repair(args.pack_dir, args.out, overwrite=False)
-            else:
-                result = unpack(args.pack_dir, args.out)
+            result = unpack(args.pack_dir, args.out, skip_existing=args.skip_existing)
         elif args.command == "repair":
             result = repair(args.pack_dir, args.out, overwrite=args.overwrite)
         elif args.command == "agents-generate":
