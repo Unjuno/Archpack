@@ -2,235 +2,187 @@
 
 ## 0. Purpose
 
-This roadmap describes what Archpack should become, step by step.
+This roadmap describes the current direction of Archpack.
 
-It is not an implementation spec, command reference, or finalized schema.
+It is not a command reference or a full implementation spec.
 
-Archpack should first prove one small core loop:
+The current MVP has proven this core loop:
 
 ```text
 pack directory → file tree → explicit repair
 ```
 
-Everything else should be treated as a plugin candidate until the core is stable.
+Everything beyond this core should be treated as a reviewed plugin candidate or a later experiment.
 
 ---
 
-## 1. Core MVP: file structure generator
+## 1. Current MVP status
 
-### Goal
+The MVP is implemented as a small directory-pack tool.
 
-Prepare one pack directory and generate a project file structure from its `tree/` directory.
+A pack directory contains a `tree/` directory.
+Files under `tree/` are generated into an output directory.
 
-The pack directory should contain the files to generate as real files and folders.
-
-Example:
+Example pack:
 
 ```text
-architecture-pack/
+examples/minimal-pack/
 └─ tree/
-   ├─ README.md
-   ├─ docs/
-   │  └─ architecture.md
-   └─ src/
-      └─ app.py
+   └─ README.md
 ```
 
-### Why
+Implemented commands:
 
-The first value is reproducible structure generation.
+```text
+archpack unpack <pack-dir> --out <dir>
+archpack unpack <pack-dir> --out <dir> --skip-existing
+archpack repair <pack-dir> --out <dir>
+archpack repair <pack-dir> --out <dir> --overwrite
+```
 
-Instead of manually splitting one architecture document into many files, Archpack should create those files directly from a directory pack.
+Implemented validation:
 
-### Success state
-
-A user can prepare a pack directory, run Archpack, and obtain the described file tree.
-
----
-
-## 2. Core MVP: explicit repair
-
-### Goal
-
-If the generated output tree is damaged, Archpack can restore generated files from the same pack directory when the user explicitly asks it to repair.
-
-### Why
-
-The first MVP cannot continuously enforce a structure.
-
-However, it can still be useful if it can recreate or restore the generated structure from the pack.
-
-### Boundary
-
-Explicit repair is allowed in core MVP.
-
-Continuous enforcement is not.
-
-Archpack should not:
-
-- watch the project in the background,
-- automatically repair without user action,
-- decide semantic correctness,
-- repair files outside the pack-generated tree.
-
-### Undecided
-
-- Command names and arguments.
-- Overwrite policy.
-- Whether repair overwrites changed files or only restores missing files.
-- Whether metadata is needed at all.
-- Generated marker policy.
+- basic unpack,
+- existing-file refusal,
+- `--skip-existing`,
+- default repair for missing files,
+- overwrite repair,
+- symlink rejection,
+- CI test run through GitHub Actions.
 
 ---
 
-## 3. Plugin direction
+## 2. Core boundary
+
+Core includes:
+
+- reading a pack directory,
+- reading files under `tree/`,
+- generating directories,
+- generating files,
+- writing file contents,
+- skipping existing files when explicitly requested,
+- explicitly repairing generated files from the pack when requested.
+
+Core does not include:
+
+- continuous enforcement,
+- background monitoring,
+- implicit auto-repair,
+- plugin execution,
+- `AGENTS.md` generation as special behavior,
+- `.archpack/` state management,
+- package management.
+
+---
+
+## 3. Current safety policy
+
+The current safety policy is intentionally conservative.
+
+- Files outside `tree/` are not generated.
+- Existing files are not overwritten by default.
+- `unpack` stops when it would overwrite an existing file.
+- `unpack --skip-existing` keeps existing files and writes only missing files.
+- `repair` restores missing files only by default.
+- `repair --overwrite` overwrites existing files only when explicitly requested.
+- Symlinks in the pack tree are rejected.
+
+---
+
+## 4. Plugin direction
 
 Archpack should not add every useful capability into the core.
 
-The core should stay small:
+Plugin candidates should be handled in the same repository, but only after review.
+
+The current plugin intake policy is:
 
 ```text
-read pack directory → generate file tree → explicitly repair generated files
+one problem → one experiment → one review → keep, revise, or remove
 ```
 
-Additional behavior should be explored as plugins or plugin-like experiments.
+Plugins should be placed under:
 
-This keeps the release body understandable even if many experiments are created.
+```text
+src/archpack/plugins/<plugin-name>/
+```
+
+Each plugin should have one descriptor file:
+
+```text
+src/archpack/plugins/<plugin-name>/plugin.yml
+```
+
+A plugin is recognized by placement, descriptor, and owner review.
+
+Plugins should not run implicitly during core `unpack` or `repair`.
 
 ---
 
-## 4. First plugin candidate: AGENTS.md generation
+## 5. First plugin candidate: AGENTS.md generation
 
-### Goal
+The first plugin candidate is `AGENTS.md` generation.
 
-Generate `AGENTS.md` files from plugin-defined local rules.
-
-A project root `AGENTS.md` is expected.
-Additional `AGENTS.md` files can be generated in selected subdirectories.
-
-Example:
+Candidate location:
 
 ```text
-project/
-├─ AGENTS.md
-├─ src/
-│  ├─ AGENTS.md
-│  └─ services/
-│     ├─ AGENTS.md
-│     └─ auth/
-│        ├─ AGENTS.md
-│        └─ password_service.py
-└─ docs/
-   ├─ AGENTS.md
-   └─ architecture.md
+src/archpack/plugins/agents/
 ```
 
-### Why
+Candidate descriptor:
 
-A single root `AGENTS.md` becomes too broad.
+```text
+src/archpack/plugins/agents/plugin.yml
+```
 
-Directory-level files separate responsibilities:
+Possible future input:
 
-- root: project-wide constraints,
-- first-level directories: major area rules,
-- deeper directories: local operational rules.
+```yaml
+agent_rules:
+  - dir: .
+    rules:
+      - Keep instructions short.
 
-### Writing policy
+  - dir: src
+    rules:
+      - Keep application logic inside src.
+```
 
-- Use bullet points.
-- Prefer one rule per line.
-- Avoid long paragraphs.
-- Keep local rule blocks short.
-- Use 50 lines as a rough upper limit.
+Possible output:
+
+```text
+AGENTS.md
+src/AGENTS.md
+```
+
+This must remain outside the core until reviewed as a plugin.
 
 ---
 
-## 5. Second plugin candidate: effective AGENTS.md
+## 6. Second plugin candidate: effective AGENTS.md
 
-### Goal
-
-Generate lower-level `AGENTS.md` files as effective instruction files:
+A later plugin extension may generate lower-level `AGENTS.md` files as effective instruction files:
 
 ```text
 parent rules + local rules = effective AGENTS.md
 ```
 
-This makes inherited constraints explicit where the agent is likely to read them.
+Open questions for this candidate:
 
-### Example
-
-Root local rules:
-
-```md
-- Do not add external network calls unless explicitly allowed.
-- Do not store secrets in source files.
-```
-
-`src/` local rules:
-
-```md
-- Keep application logic inside `src/`.
-```
-
-`src/services/` local rules:
-
-```md
-- Put business rules in service modules.
-```
-
-`src/services/auth/` local rules:
-
-```md
-- Do not bypass authentication checks.
-- Add tests when changing authentication behavior.
-```
-
-Generated `src/services/auth/AGENTS.md`:
-
-```md
-- Do not add external network calls unless explicitly allowed.
-- Do not store secrets in source files.
-- Keep application logic inside `src/`.
-- Put business rules in service modules.
-- Do not bypass authentication checks.
-- Add tests when changing authentication behavior.
-```
-
-### Undecided
-
-- How to detect child rules that weaken parent rules.
-- Whether to include inherited/local section headers.
-- Whether to collapse duplicate rules.
-- Whether effective files need a separate hard line limit.
+- How should child rules that weaken parent rules be detected?
+- Should inherited and local rules be separated by section headers?
+- Should duplicate rules be collapsed?
+- Should effective files have a hard line limit?
 
 ---
 
-## 6. Development sequence
-
-The sequence should be:
-
-```text
-1. Build core directory-pack file tree generator.
-2. Add explicit repair from the pack directory.
-3. Validate the core with small pack directories.
-4. Define a minimal plugin boundary only after the core works.
-5. Try AGENTS.md generation as the first plugin.
-6. Try effective AGENTS.md generation as a second plugin or extension.
-7. Promote only useful, reviewable plugin behavior into the release body.
-```
-
-The core MVP must not depend on the AGENTS.md plugin.
-
----
-
-## 7. Deferred candidates
+## 7. Future candidates
 
 These are useful but not confirmed for the core.
 
-They should be considered only after core MVP use reveals concrete problems.
+They should be considered only after concrete user stories justify them.
 
-- AGENTS.md generation.
-- Effective AGENTS.md generation.
 - Generated-file drift check.
 - Clean-up.
 - Reference monitoring.
@@ -238,20 +190,28 @@ They should be considered only after core MVP use reveals concrete problems.
 - Semantic architecture drift checks.
 - File-level `*.agent.md`.
 - Formal schema validation.
-- CI integration.
+- Plugin list / disable / remove / doctor commands.
+- `.archpack/` config, state, and cache.
+- A package-manager-like plugin system.
 
 ---
 
-## 8. Discipline
+## 8. Development discipline
 
-Do not expand the core before the small loop works.
+Do not expand the core unless the problem clearly belongs to the core.
 
-First prove:
+Default decision rule:
+
+```text
+core only when necessary
+plugin when optional
+remove when not worth maintaining
+```
+
+The core MVP should remain easy to explain:
 
 ```text
 pack directory → file tree → explicit repair
 ```
 
-Then test additional capabilities as plugins.
-
-Only promote plugin behavior when it solves a concrete problem without making the core harder to explain.
+New behavior must be small, reviewed, tested, documented, and removable.
