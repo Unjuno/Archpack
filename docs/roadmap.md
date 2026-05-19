@@ -9,7 +9,7 @@ It is not an implementation spec, command reference, or finalized schema.
 Archpack should first prove one small core loop:
 
 ```text
-pack directory → file tree
+pack directory → file tree → explicit repair
 ```
 
 Everything else should be treated as a plugin candidate until the core is stable.
@@ -46,23 +46,51 @@ Instead of manually splitting one architecture document into many files, Archpac
 
 A user can prepare a pack directory, run Archpack, and obtain the described file tree.
 
+---
+
+## 2. Core MVP: explicit repair
+
+### Goal
+
+If the generated output tree is damaged, Archpack can restore generated files from the same pack directory when the user explicitly asks it to repair.
+
+### Why
+
+The first MVP cannot continuously enforce a structure.
+
+However, it can still be useful if it can recreate or restore the generated structure from the pack.
+
+### Boundary
+
+Explicit repair is allowed in core MVP.
+
+Continuous enforcement is not.
+
+Archpack should not:
+
+- watch the project in the background,
+- automatically repair without user action,
+- decide semantic correctness,
+- repair files outside the pack-generated tree.
+
 ### Undecided
 
 - Command names and arguments.
 - Overwrite policy.
+- Whether repair overwrites changed files or only restores missing files.
 - Whether metadata is needed at all.
 - Generated marker policy.
 
 ---
 
-## 2. Plugin direction
+## 3. Plugin direction
 
 Archpack should not add every useful capability into the core.
 
 The core should stay small:
 
 ```text
-read pack directory → generate file tree
+read pack directory → generate file tree → explicitly repair generated files
 ```
 
 Additional behavior should be explored as plugins or plugin-like experiments.
@@ -71,7 +99,7 @@ This keeps the release body understandable even if many experiments are created.
 
 ---
 
-## 3. First plugin candidate: AGENTS.md generation
+## 4. First plugin candidate: AGENTS.md generation
 
 ### Goal
 
@@ -117,7 +145,7 @@ Directory-level files separate responsibilities:
 
 ---
 
-## 4. Second plugin candidate: effective AGENTS.md
+## 5. Second plugin candidate: effective AGENTS.md
 
 ### Goal
 
@@ -177,24 +205,25 @@ Generated `src/services/auth/AGENTS.md`:
 
 ---
 
-## 5. Development sequence
+## 6. Development sequence
 
 The sequence should be:
 
 ```text
 1. Build core directory-pack file tree generator.
-2. Validate the core with small pack directories.
-3. Define a minimal plugin boundary only after the core works.
-4. Try AGENTS.md generation as the first plugin.
-5. Try effective AGENTS.md generation as a second plugin or extension.
-6. Promote only useful, reviewable plugin behavior into the release body.
+2. Add explicit repair from the pack directory.
+3. Validate the core with small pack directories.
+4. Define a minimal plugin boundary only after the core works.
+5. Try AGENTS.md generation as the first plugin.
+6. Try effective AGENTS.md generation as a second plugin or extension.
+7. Promote only useful, reviewable plugin behavior into the release body.
 ```
 
 The core MVP must not depend on the AGENTS.md plugin.
 
 ---
 
-## 6. Deferred candidates
+## 7. Deferred candidates
 
 These are useful but not confirmed for the core.
 
@@ -203,7 +232,6 @@ They should be considered only after core MVP use reveals concrete problems.
 - AGENTS.md generation.
 - Effective AGENTS.md generation.
 - Generated-file drift check.
-- Repair.
 - Clean-up.
 - Reference monitoring.
 - Network monitoring.
@@ -214,14 +242,14 @@ They should be considered only after core MVP use reveals concrete problems.
 
 ---
 
-## 7. Discipline
+## 8. Discipline
 
 Do not expand the core before the small loop works.
 
 First prove:
 
 ```text
-pack directory → file tree
+pack directory → file tree → explicit repair
 ```
 
 Then test additional capabilities as plugins.
