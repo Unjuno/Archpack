@@ -20,11 +20,22 @@ def test_agents_plugin_descriptor_links_usage_docs() -> None:
     assert "usage: docs/plugins/agents.md" in descriptor
 
 
-def test_agents_plugin_descriptor_declares_command_input_output_and_removal() -> None:
+def test_agents_plugin_descriptor_declares_explicit_command_schema() -> None:
     descriptor = read_agents_plugin_descriptor()
 
     assert "name: agents-generate" in descriptor
     assert "entrypoint: archpack.plugins.agents.commands:generate" in descriptor
+    assert "invocation: explicit" in descriptor
+    assert "arguments:" in descriptor
+    assert "name: pack_dir" in descriptor
+    assert "options:" in descriptor
+    assert "cli: --out" in descriptor
+    assert "cli: --overwrite" in descriptor
+
+
+def test_agents_plugin_descriptor_declares_input_output_and_removal() -> None:
+    descriptor = read_agents_plugin_descriptor()
+
     assert "inputs:" in descriptor
     assert "- agents.toml" in descriptor
     assert "outputs:" in descriptor
