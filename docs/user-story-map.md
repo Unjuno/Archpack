@@ -13,15 +13,14 @@ Archpack should first build the smallest useful core. After that, new behavior s
 The first MVP should stay limited to this loop:
 
 ```text
-pack → file tree
+pack directory → file tree → explicit repair
 ```
 
-The MVP should prove that one pack can:
+The MVP should prove that one pack directory can:
 
-1. define directories,
-2. define files,
-3. define file contents,
-4. generate the described project structure.
+1. store files under `tree/`,
+2. generate the described project structure,
+3. restore missing generated files when repair is explicitly requested.
 
 `AGENTS.md` generation and inherited effective instructions are plugin candidates, not core MVP requirements.
 
@@ -32,9 +31,11 @@ The MVP should prove that one pack can:
 The user journey is:
 
 ```text
-Prepare pack
+Prepare pack directory
 → Generate file tree
 → Inspect result
+→ Damage or remove generated files
+→ Explicitly repair from pack
 → Observe problems
 → Decide next plugin or core change
 ```
@@ -43,23 +44,23 @@ Prepare pack
 
 ## 3. User activities
 
-### 3.1 Prepare pack
+### 3.1 Prepare pack directory
 
 User goal:
 
-- Write one compact architecture pack instead of manually creating many files.
+- Create one pack directory whose `tree/` folder contains the files to generate.
 
 Questions:
 
-- Is the format understandable?
-- Is the file easier to review than many separate files?
-- What fields are missing?
+- Is the directory pack understandable?
+- Is it easier to review than a large YAML file?
+- Are metadata or IDs actually needed?
 
 ### 3.2 Generate file tree
 
 User goal:
 
-- Generate a reproducible project structure from one pack.
+- Generate a reproducible project structure from one pack directory.
 
 Questions:
 
@@ -79,7 +80,19 @@ Questions:
 - Is the result too large?
 - Did the pack create anything surprising?
 
-### 3.4 Decide next work
+### 3.4 Explicitly repair
+
+User goal:
+
+- Restore missing generated files from the pack directory when requested.
+
+Questions:
+
+- Does repair restore the expected files?
+- Does repair avoid unexpected overwrites?
+- Is repair behavior easy to understand?
+
+### 3.5 Decide next work
 
 User goal:
 
@@ -88,7 +101,8 @@ User goal:
 Questions:
 
 - Is the problem in the pack format?
-- Is the problem in generated output?
+- Is the problem in generation?
+- Is the problem in repair?
 - Is the problem outside Archpack's scope?
 - Can the problem be reproduced with a small example?
 
@@ -103,7 +117,7 @@ They should be tested as plugin candidates only after the core works.
 
 User goal:
 
-- Generate root and directory-level `AGENTS.md` files from pack-defined rules.
+- Generate root and directory-level `AGENTS.md` files from plugin-defined rules.
 
 Questions:
 
@@ -166,7 +180,6 @@ These should remain deferred until user stories justify them:
 - `AGENTS.md` generation,
 - effective inherited `AGENTS.md`,
 - generated-file drift checks,
-- repair,
 - clean-up,
 - reference monitoring,
 - network monitoring,
