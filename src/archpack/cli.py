@@ -14,6 +14,11 @@ def build_parser() -> argparse.ArgumentParser:
     unpack_parser = subparsers.add_parser("unpack", help="Generate a file tree from a pack directory.")
     unpack_parser.add_argument("pack_dir", type=Path, help="Pack directory containing a tree/ directory.")
     unpack_parser.add_argument("--out", required=True, type=Path, help="Output directory.")
+    unpack_parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Do not stop on existing files. Existing files are skipped and missing files are written.",
+    )
 
     repair_parser = subparsers.add_parser("repair", help="Repair generated files from a pack directory.")
     repair_parser.add_argument("pack_dir", type=Path, help="Pack directory containing a tree/ directory.")
@@ -33,7 +38,10 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "unpack":
-            result = unpack(args.pack_dir, args.out)
+            if args.skip_existing:
+                result = repair(args.pack_dir, args.out, overwrite=False)
+            else:
+                result = unpack(args.pack_dir, args.out)
         elif args.command == "repair":
             result = repair(args.pack_dir, args.out, overwrite=args.overwrite)
         else:
