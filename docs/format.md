@@ -10,7 +10,7 @@ It exists to keep the MVP simple before implementation.
 The core MVP remains:
 
 ```text
-pack → file tree
+pack directory → file tree → explicit repair
 ```
 
 ---
@@ -40,6 +40,8 @@ README.md
 docs/architecture.md
 src/app.py
 ```
+
+The same pack directory should also be usable as the source for explicit repair.
 
 The file name and directory structure are already represented by the filesystem.
 There is no need to rewrite the same structure in YAML for the core MVP.
@@ -84,10 +86,12 @@ Preferred core pack model:
 ```text
 architecture-pack/
 └─ tree/
-   └─ <files to generate>
+   └─ <files to generate or repair>
 ```
 
-The `tree/` directory is copied into the output directory.
+The `tree/` directory is copied into the output directory during generation.
+
+The same `tree/` directory is used as the source of truth during explicit repair.
 
 The core job is therefore simple:
 
@@ -95,9 +99,37 @@ The core job is therefore simple:
 read source tree → validate paths → write output tree
 ```
 
+For repair:
+
+```text
+read source tree → compare output tree → restore requested generated files
+```
+
 ---
 
-## 4. Metadata
+## 4. Repair option
+
+Explicit repair is part of the core MVP.
+
+Repair means:
+
+- the user explicitly asks Archpack to repair,
+- Archpack uses the pack directory as the source,
+- Archpack restores output files from `tree/`,
+- Archpack does not monitor continuously,
+- Archpack does not decide semantic correctness.
+
+Initial repair direction:
+
+```text
+repair missing files by default
+```
+
+Overwriting changed files should require a separate explicit option if added.
+
+---
+
+## 5. Metadata
 
 Metadata is not required for the core MVP.
 
@@ -124,7 +156,7 @@ Possible future metadata:
 
 ---
 
-## 5. IDs
+## 6. IDs
 
 IDs are useful for future features, but they are not required for the core MVP.
 
@@ -150,7 +182,7 @@ Future metadata/plugin layer:
 
 ---
 
-## 6. Empty directories
+## 7. Empty directories
 
 The core MVP should focus on files.
 
@@ -166,7 +198,7 @@ A first-class empty directory rule can be reconsidered later.
 
 ---
 
-## 7. Tab-indented tree notation
+## 8. Tab-indented tree notation
 
 A tab-indented tree notation is not needed if the pack itself is a directory tree.
 
@@ -192,7 +224,7 @@ A tree text format may be useful later as a helper or converter, but not as the 
 
 ---
 
-## 8. Plugins
+## 9. Plugins
 
 Plugin-specific format should not be added to the core format until a plugin experiment proves the need.
 
@@ -202,7 +234,7 @@ That belongs to the plugin layer, not the core MVP.
 
 ---
 
-## 9. Scaffolding command
+## 10. Scaffolding command
 
 A future command may create a starter pack directory.
 
@@ -230,13 +262,17 @@ This is not required for the core MVP.
 
 ---
 
-## 10. Summary
+## 11. Summary
 
 Current decision:
 
 ```text
 Core MVP format:
   directory-based pack
+
+Core MVP behavior:
+  generate file tree
+  explicitly repair generated files when requested
 
 Canonical source of file names:
   filesystem paths under tree/
