@@ -66,7 +66,33 @@ The important rule is that plugins must remain reviewable and removable.
 
 ---
 
-## 3. Plugin acceptance rule
+## 3. Plugin placement rule
+
+A plugin works by being placed in the appropriate plugin area.
+
+The first repository-local plugin area should be:
+
+```text
+src/archpack/plugins/<plugin-name>/
+```
+
+Example:
+
+```text
+src/archpack/plugins/
+└─ agents/
+   ├─ __init__.py
+   ├─ commands.py
+   └─ generator.py
+```
+
+This means plugin recognition starts from repository structure, not from an external package manager.
+
+Do not introduce a registry, installer, or dependency resolver before real plugins require it.
+
+---
+
+## 4. Plugin acceptance rule
 
 A plugin may remain in the repository only if:
 
@@ -82,29 +108,19 @@ If a plugin fails these conditions, it should be revised or removed.
 
 ---
 
-## 4. Plugin shape for the first stage
+## 5. Plugin shape for the first stage
 
 Do not start with a dynamic plugin loader.
 
 The first accepted plugins should be explicit optional modules inside the repository.
 
-Possible future shape:
-
-```text
-src/archpack/plugins/
-└─ agents/
-   ├─ __init__.py
-   ├─ commands.py
-   └─ generator.py
-```
-
-This is only a candidate shape.
+Initial plugin behavior should be invoked explicitly by core CLI wiring or a small reviewed command, not by automatic discovery.
 
 The first priority is reviewability, not extensibility.
 
 ---
 
-## 5. `.archpack/` rule
+## 6. `.archpack/` rule
 
 `.archpack/` may be introduced later, but it is not required for the core MVP.
 
@@ -116,7 +132,7 @@ It should not become an APT-like package directory.
 
 ---
 
-## 6. Rejected early layout
+## 7. Rejected early layout
 
 The previous local layout idea is rejected for now:
 
@@ -143,11 +159,11 @@ Reason:
 
 Corrected rule:
 
-> Do not design a full plugin storage layout before real reviewed plugins prove what state is actually needed.
+> Do not design a full project-local plugin storage layout before real reviewed plugins prove what state is actually needed.
 
 ---
 
-## 7. Future project-local state direction
+## 8. Future project-local state direction
 
 If project-local state becomes necessary, separate configuration, state, and cache.
 
@@ -181,9 +197,15 @@ The important separation is:
 
 ---
 
-## 8. First plugin candidate
+## 9. First plugin candidate
 
 `AGENTS.md` generation is the first plugin candidate, not core behavior.
+
+The candidate plugin location would be:
+
+```text
+src/archpack/plugins/agents/
+```
 
 Possible future plugin input:
 
@@ -209,7 +231,7 @@ A later plugin extension may generate effective inherited `AGENTS.md` files.
 
 ---
 
-## 9. Why not an APT-like package manager now
+## 10. Why not an APT-like package manager now
 
 An APT-like package manager is too large for the current project stage.
 
@@ -227,7 +249,7 @@ Those decisions should wait until there are multiple real plugins worth managing
 
 ---
 
-## 10. Future removal tooling
+## 11. Future removal tooling
 
 Archpack may later include tools that make plugin removal safer.
 
@@ -246,7 +268,7 @@ They should be added only after there are real reviewed plugins to manage.
 
 ---
 
-## 11. Current decision
+## 12. Current decision
 
 Current decision:
 
@@ -258,6 +280,9 @@ Plugin intake:
   single repository
   reviewed before keeping
   removable when unnecessary or unsafe
+
+Plugin placement:
+  src/archpack/plugins/<plugin-name>/
 
 Plugin implementation:
   deferred
