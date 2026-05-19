@@ -4,56 +4,49 @@
 
 Archpack should avoid growing into a large unclear tool.
 
-The MVP repository is a validation space. It exists to test the core idea and candidate features.
+The project does not need a separate release repository or release fork at this stage.
 
-The release body may live in a separate fork or a separate repository.
+The main repository can contain the MVP, reviewed plugins, experiments, examples, and documentation, as long as accepted behavior remains reviewable and removable.
 
-The purpose is to allow many experiments without forcing every experiment into the release version.
+The purpose is:
+
+```text
+try small features → review them → keep useful ones → remove bad or unnecessary ones
+```
 
 ---
 
 ## 1. Core policy
 
-Do not treat the MVP repository as the final product boundary.
-
-Use it as a feature validation environment.
+Archpack should grow through reviewed changes, not through uncontrolled feature accumulation.
 
 The default rule is:
 
 ```text
-one problem → one experiment → one review → promote or discard
+one problem → one experiment → one review → keep, revise, or remove
 ```
 
-Only features that prove they belong in the release body should be promoted.
+A plugin or feature may enter the repository only after review.
+
+A plugin or feature may also be removed later if it becomes unnecessary, too complex, unsafe, or out of scope.
 
 ---
 
-## 2. Repository roles
+## 2. Repository role
 
-### 2.1 MVP repository
+Use one repository for now.
 
-The MVP repository is used to:
+The repository is used to:
 
 - prove the core loop,
 - keep validation files and examples,
 - test candidate plugins,
 - collect user-story-map problems,
-- compare one-feature experiments.
+- review plugin experiments,
+- keep accepted plugins,
+- remove features that should not remain.
 
-It may become messy during exploration, as long as the mess is intentional and reviewable.
-
-### 2.2 Release repository or release fork
-
-The release body is used to:
-
-- hold only accepted features,
-- stay small and understandable,
-- keep the public workflow stable,
-- avoid speculative feature growth,
-- provide a clean implementation for actual users.
-
-The release body can be a separate fork or a separate repository.
-The exact choice is not decided yet.
+A separate release repository or release fork is not needed unless the single-repository workflow becomes unmanageable.
 
 ---
 
@@ -81,21 +74,24 @@ Bad examples:
 ## 4. Recommended workflow
 
 ```text
-MVP validation repo
-→ concrete problem from user story map
-→ one-feature fork, branch, or small repo
-→ smallest experiment
+concrete problem from user story map
+→ one-feature branch or small experiment
+→ implementation with tests
 → review behavior and complexity
-→ promote to release body, revise, or discard
+→ keep, revise, or remove
 ```
 
-The experiment should remain isolated until reviewed.
+A fork is optional.
+
+A separate repository is optional.
+
+The important requirement is that the experiment remains small enough to review.
 
 ---
 
-## 5. Promotion criteria
+## 5. Keep criteria
 
-A feature may be promoted to the release body only if:
+A feature or plugin may remain in the repository only if:
 
 - it solves a repeated or important user problem,
 - it has a small example,
@@ -103,15 +99,15 @@ A feature may be promoted to the release body only if:
 - it does not force unrelated schema changes,
 - it does not make the core workflow harder to explain,
 - it can be documented briefly,
-- it fits the current release scope.
+- it can be disabled, ignored, or removed when no longer needed.
 
-If these are not true, the experiment should remain outside the release body.
+If these are not true, the feature should be revised or removed.
 
 ---
 
 ## 6. Review questions
 
-Before promoting an experiment, answer:
+Before keeping an experiment, answer:
 
 1. What concrete problem does it solve?
 2. Can the problem be reproduced with a small example?
@@ -120,43 +116,64 @@ Before promoting an experiment, answer:
 5. Does it introduce hidden complexity?
 6. Can it be tested?
 7. Can it be documented briefly?
-8. Should this be promoted, revised, or discarded?
+8. Can it be removed without damaging the core?
+9. Should this be kept, revised, or removed?
 
 ---
 
-## 7. Discarding is allowed
+## 7. Removal is allowed
 
-Discarding an experiment is not a failure.
+Removing a feature is not a failure.
 
-Discarded experiments are useful when they reveal:
+Removal is useful when it reveals:
 
 - the feature is too complex,
 - the problem is not Archpack's responsibility,
 - the idea needs a different design,
-- the feature should stay as an external add-on,
-- the feature is useful only for a narrow project type.
+- the feature should stay external,
+- the feature is useful only for a narrow project type,
+- the feature increases maintenance cost more than user value.
 
 ---
 
-## 8. Relationship to user story mapping
+## 8. Future removal tooling
+
+Archpack may later include tools that make removal safer.
+
+Possible future tools:
+
+```text
+archpack plugin list
+archpack plugin disable <name>
+archpack plugin remove <name>
+archpack plugin doctor <name>
+```
+
+These are not core MVP commands.
+
+They should be added only after there are real reviewed plugins to manage.
+
+---
+
+## 9. Relationship to user story mapping
 
 The user story map identifies concrete problems.
 
-This experiment policy defines how candidate solutions are tested and promoted.
+This experiment policy defines how candidate solutions are tested, reviewed, kept, or removed.
 
 ```text
 user story map
 → problem issue
 → one-feature experiment
 → review
-→ release body or discard
+→ keep, revise, or remove
 ```
 
 ---
 
-## 9. First rule
+## 10. First rule
 
-Do not expand the release body before the core MVP works.
+Do not expand the core before the core MVP remains stable.
 
 The core MVP remains:
 
@@ -164,4 +181,4 @@ The core MVP remains:
 pack directory → file tree → explicit repair
 ```
 
-After that, plugin experiments may be generated in quantity, but only reviewed and accepted behavior should enter the release body.
+After that, plugin experiments may be generated in quantity, but they must remain reviewable and removable.
