@@ -30,7 +30,10 @@ def load_agent_rules(pack_dir: Path) -> list[AgentRuleBlock]:
     config_path = Path(pack_dir) / "agents.toml"
     if not config_path.exists():
         raise AgentsPluginError(f"Missing agents.toml: {config_path}")
-    data = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    try:
+        data = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except tomllib.TOMLDecodeError as exc:
+        raise AgentsPluginError(f"Invalid agents.toml: {exc}") from exc
     raw_blocks = data.get("agents")
     if not isinstance(raw_blocks, list):
         raise AgentsPluginError("agents.toml must define [[agents]] blocks")
