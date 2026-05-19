@@ -108,6 +108,8 @@ It should answer:
 - Is it experimental or accepted?
 - Where is its usage document?
 - What command exposes it?
+- Is the command explicit or implicit?
+- What arguments and options does the command accept?
 - What input does it read?
 - What files or behavior can it produce?
 - How can it be tested?
@@ -119,15 +121,33 @@ Current descriptor example:
 id: agents
 name: AGENTS.md generator
 status: experimental
-summary: Generate AGENTS.md files from local rules declared in agents.toml.
+summary: Generate effective AGENTS.md files from local rules declared in agents.toml.
 
 docs:
   usage: docs/plugins/agents.md
 
 commands:
   - name: agents-generate
-    help: Generate AGENTS.md files from agents.toml.
+    help: Generate effective AGENTS.md files from agents.toml.
     entrypoint: archpack.plugins.agents.commands:generate
+    invocation: explicit
+    arguments:
+      - name: pack_dir
+        type: path
+        required: true
+        help: Pack directory containing agents.toml.
+    options:
+      - name: out
+        cli: --out
+        type: path
+        required: true
+        help: Output directory.
+      - name: overwrite
+        cli: --overwrite
+        type: flag
+        required: false
+        default: false
+        help: Overwrite existing AGENTS.md files.
 
 inputs:
   files:
@@ -217,7 +237,7 @@ If a plugin fails these conditions, it should be revised or removed.
 
 ## 8. Reviewed plugin: agents
 
-The first reviewed plugin is the AGENTS.md generator.
+The first reviewed plugin is the effective AGENTS.md generator.
 
 Location:
 
@@ -249,39 +269,45 @@ Command:
 archpack agents-generate <pack-dir> --out <dir>
 ```
 
+Behavior:
+
+```text
+parent rules + local rules = generated AGENTS.md
+```
+
+Each local rule unit is limited to 30 rules.
+There is no total generated-file length warning.
+
 Output examples:
 
 ```text
 AGENTS.md
 src/AGENTS.md
+src/services/AGENTS.md
 ```
 
 This plugin is explicit. It does not run during `unpack` or `repair`.
 
 ---
 
-## 9. Deferred plugin extension: effective AGENTS.md
+## 9. Deferred checks for agents
 
-A later extension may generate effective inherited `AGENTS.md` files:
+The agents plugin is implemented, but some checks are still deferred.
 
-```text
-parent rules + local rules = effective AGENTS.md
-```
+Deferred checks:
 
-This is not part of the current agents plugin.
+- detect contradictory rules,
+- decide whether child rules weaken parent rules,
+- collapse duplicate rules,
+- add stronger machine-readable generated markers.
 
-Open questions:
-
-- how to detect child rules that weaken parent rules,
-- whether to include inherited/local section headers,
-- whether to collapse duplicate rules,
-- whether effective files need a hard line limit.
+These are optional follow-up experiments, not current core requirements.
 
 ---
 
-## 10. `.archpack/` rule
+## 10. `.archpack` rule
 
-`.archpack/` is deferred.
+`.archpack` is deferred.
 
 If introduced later, it should store project-local Archpack data only.
 
@@ -310,9 +336,9 @@ Those decisions should wait until there are multiple real plugins worth managing
 
 ---
 
-## 12. Future removal tooling
+## 12. Future management tooling
 
-Archpack may later include tools that make plugin removal safer.
+Archpack may later include tools that make plugin management safer.
 
 Possible future tools:
 
@@ -356,10 +382,10 @@ Plugin usage:
   no implicit execution during core unpack/repair
 
 Reviewed plugin:
-  agents
+  agents effective AGENTS.md generator
 
 Deferred:
-  effective AGENTS.md
+  contradiction checks
   dynamic plugin loader
   .archpack state
   APT-like package manager
