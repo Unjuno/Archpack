@@ -87,6 +87,17 @@ Rules must be one-line strings.
 Empty rules are rejected.
 Duplicate `dir` blocks are rejected.
 
+There is no warning for the total generated `AGENTS.md` size.
+
+Reason:
+
+```text
+30 local rules × about 30 inherited directories = about 900 rules
+```
+
+This is still acceptable for the intended use.
+The constraint is local-unit readability, not total generated-file length.
+
 ---
 
 ## 4. Effective generation
@@ -178,6 +189,7 @@ Behavior:
 
 This plugin does not:
 
+- warn on total generated `AGENTS.md` length,
 - detect contradictory rules,
 - decide whether child rules weaken parent rules,
 - monitor files,
