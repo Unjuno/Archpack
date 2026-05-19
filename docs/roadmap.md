@@ -120,9 +120,9 @@ Plugins should not run implicitly during core `unpack` or `repair`.
 
 ---
 
-## 5. Reviewed plugin: AGENTS.md generation
+## 5. Reviewed plugin: effective AGENTS.md generation
 
-The first reviewed plugin is `AGENTS.md` generation.
+The first reviewed plugin is effective `AGENTS.md` generation.
 
 Location:
 
@@ -155,31 +155,36 @@ archpack agents-generate <pack-dir> --out <dir>
 archpack agents-generate <pack-dir> --out <dir> --overwrite
 ```
 
+Behavior:
+
+```text
+parent rules + local rules = generated AGENTS.md
+```
+
+Each local rule unit is limited to 30 rules.
+
 Output examples:
 
 ```text
 AGENTS.md
 src/AGENTS.md
+src/services/AGENTS.md
 ```
 
 This plugin remains outside the core and only runs through explicit command invocation.
 
 ---
 
-## 6. Next plugin candidate: effective AGENTS.md
+## 6. Open questions for agents plugin
 
-A later plugin extension may generate lower-level `AGENTS.md` files as effective instruction files:
+The reviewed agents plugin now generates effective files, but some policy checks are still intentionally deferred.
 
-```text
-parent rules + local rules = effective AGENTS.md
-```
-
-Open questions for this candidate:
+Open questions:
 
 - How should child rules that weaken parent rules be detected?
-- Should inherited and local rules be separated by section headers?
 - Should duplicate rules be collapsed?
-- Should effective files have a hard line limit?
+- Should generated files include stronger machine-readable markers?
+- Should generated `AGENTS.md` files have a hard total line limit, separate from the 30-rule local unit limit?
 
 ---
 
@@ -197,7 +202,7 @@ They should be considered only after concrete user stories justify them.
 - File-level `*.agent.md`.
 - Formal schema validation.
 - Plugin list / disable / remove / doctor commands.
-- `.archpack/` config, state, and cache.
+- `.archpack` config, state, and cache.
 - A package-manager-like plugin system.
 
 ---
