@@ -17,7 +17,49 @@ It does not run during core `unpack` or `repair`.
 
 ---
 
-## 1. Plugin location
+## 1. Quick start: write and run
+
+Create a pack directory with `agents.toml`:
+
+```text
+my-pack/
+└─ agents.toml
+```
+
+Write local rules per directory:
+
+```toml
+[[agents]]
+dir = "."
+rules = [
+  "Keep instructions short.",
+]
+
+[[agents]]
+dir = "src"
+rules = [
+  "Keep application code under src.",
+]
+```
+
+Run the plugin:
+
+```bash
+archpack agents-generate my-pack --out tmp/out
+```
+
+Generated output:
+
+```text
+tmp/out/AGENTS.md
+tmp/out/src/AGENTS.md
+```
+
+`src/AGENTS.md` includes both root rules and `src` rules.
+
+---
+
+## 2. Plugin location
 
 The plugin lives under:
 
@@ -33,7 +75,7 @@ src/archpack/plugins/agents/plugin.yml
 
 ---
 
-## 2. Input file
+## 3. Input file
 
 The plugin reads:
 
@@ -73,7 +115,7 @@ Each `[[agents]]` block defines local rules for one directory.
 
 ---
 
-## 3. Rule limits
+## 4. Rule limits
 
 Each `[[agents]]` block is one local rule unit.
 
@@ -98,7 +140,7 @@ Reason:
 
 ---
 
-## 4. Effective generation
+## 5. Effective generation
 
 Generated files include inherited parent rules.
 
@@ -128,7 +170,7 @@ Effective rule behavior:
 
 ---
 
-## 5. Generate AGENTS.md files
+## 6. Generate AGENTS.md files
 
 Run:
 
@@ -147,7 +189,7 @@ If the input contains deeper directories, deeper `AGENTS.md` files are generated
 
 ---
 
-## 6. Default overwrite behavior
+## 7. Default overwrite behavior
 
 By default, existing `AGENTS.md` files are skipped.
 
@@ -166,7 +208,7 @@ Behavior:
 
 ---
 
-## 7. Explicit overwrite
+## 8. Explicit overwrite
 
 Use `--overwrite` only when you intentionally want to replace existing `AGENTS.md` files.
 
@@ -183,7 +225,7 @@ Behavior:
 
 ---
 
-## 8. What this plugin does not do
+## 9. What this plugin does not do
 
 This plugin does not:
 
@@ -198,7 +240,7 @@ Those behaviors require separate review before being added.
 
 ---
 
-## 9. Test coverage
+## 10. Test coverage
 
 Current tests cover:
 
