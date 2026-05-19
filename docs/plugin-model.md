@@ -10,42 +10,19 @@ The core MVP is:
 pack directory → file tree → explicit repair
 ```
 
-Plugins are a future extension point. They must not be required for the core MVP.
+Plugins are future extension units. They must not be required for the core MVP.
 
----
+A plugin does not need to live in a separate repository at this stage.
 
-## 1. Review result
-
-The previous local layout idea was rejected:
+The current policy is:
 
 ```text
-.archpack/
-├─ core/
-│  ├─ config.yml
-│  ├─ manifest.yml
-│  └─ lock.yml
-└─ plugins/
-   ├─ index.yml
-   └─ <plugin-name>/
-      ├─ config.yml
-      ├─ manifest.yml
-      └─ lock.yml
+single repository → small plugin experiment → owner review → keep, revise, or remove
 ```
-
-Reason:
-
-- It still fixes too much structure before there are real plugins.
-- It mixes project configuration, generated state, plugin state, and possible plugin discovery.
-- It implies every plugin needs the same `config / manifest / lock` shape.
-- It risks making `.archpack/` look like a package manager before Archpack needs one.
-
-The corrected rule is:
-
-> Do not design a full plugin storage layout before the core MVP and first plugin experiment prove what state is actually needed.
 
 ---
 
-## 2. Core boundary
+## 1. Core boundary
 
 The core should only be responsible for:
 
@@ -70,7 +47,64 @@ The core should not continuously enforce or monitor the project.
 
 ---
 
-## 3. `.archpack/` rule
+## 2. Plugin intake policy
+
+Plugins may be added to the main repository after review.
+
+The repository can contain:
+
+- the core MVP,
+- reviewed plugin experiments,
+- accepted plugins,
+- plugin examples,
+- plugin documentation,
+- tests for plugin behavior.
+
+A separate release repository or release fork is not required now.
+
+The important rule is that plugins must remain reviewable and removable.
+
+---
+
+## 3. Plugin acceptance rule
+
+A plugin may remain in the repository only if:
+
+- it solves a concrete problem,
+- it is small enough to review,
+- it has tests or clear verification steps,
+- it does not make the core harder to explain,
+- it does not force unrelated pack-format changes,
+- it can be documented briefly,
+- it can be disabled, ignored, or removed later.
+
+If a plugin fails these conditions, it should be revised or removed.
+
+---
+
+## 4. Plugin shape for the first stage
+
+Do not start with a dynamic plugin loader.
+
+The first accepted plugins should be explicit optional modules inside the repository.
+
+Possible future shape:
+
+```text
+src/archpack/plugins/
+└─ agents/
+   ├─ __init__.py
+   ├─ commands.py
+   └─ generator.py
+```
+
+This is only a candidate shape.
+
+The first priority is reviewability, not extensibility.
+
+---
+
+## 5. `.archpack/` rule
 
 `.archpack/` may be introduced later, but it is not required for the core MVP.
 
@@ -82,7 +116,38 @@ It should not become an APT-like package directory.
 
 ---
 
-## 4. Better future layout direction
+## 6. Rejected early layout
+
+The previous local layout idea is rejected for now:
+
+```text
+.archpack/
+├─ core/
+│  ├─ config.yml
+│  ├─ manifest.yml
+│  └─ lock.yml
+└─ plugins/
+   ├─ index.yml
+   └─ <plugin-name>/
+      ├─ config.yml
+      ├─ manifest.yml
+      └─ lock.yml
+```
+
+Reason:
+
+- It fixes too much structure before there are real plugins.
+- It mixes project configuration, generated state, plugin state, and possible plugin discovery.
+- It implies every plugin needs the same `config / manifest / lock` shape.
+- It makes `.archpack/` look like a package manager before Archpack needs one.
+
+Corrected rule:
+
+> Do not design a full plugin storage layout before real reviewed plugins prove what state is actually needed.
+
+---
+
+## 7. Future project-local state direction
 
 If project-local state becomes necessary, separate configuration, state, and cache.
 
@@ -116,38 +181,17 @@ The important separation is:
 
 ---
 
-## 5. Plugin configuration direction
-
-Plugin enablement should be project-level configuration, not a package installation model.
-
-Possible future direction:
-
-```yaml
-# .archpack/config.yml
-plugins:
-  - id: agents
-    enabled: true
-```
-
-This says only that a known plugin is enabled for this project.
-
-It does not define where plugin code is installed.
-It does not define a plugin registry.
-It does not define dependency resolution.
-
----
-
-## 6. First plugin candidate
+## 8. First plugin candidate
 
 `AGENTS.md` generation is the first plugin candidate, not core behavior.
 
-Possible future pack section:
+Possible future plugin input:
 
 ```yaml
 agent_rules:
   - dir: .
     rules:
-      - Do not add external network calls unless explicitly allowed.
+      - Keep instructions short.
 
   - dir: src
     rules:
@@ -165,7 +209,7 @@ A later plugin extension may generate effective inherited `AGENTS.md` files.
 
 ---
 
-## 7. Why not an APT-like package manager now
+## 9. Why not an APT-like package manager now
 
 An APT-like package manager is too large for the current project stage.
 
@@ -183,19 +227,26 @@ Those decisions should wait until there are multiple real plugins worth managing
 
 ---
 
-## 8. Promotion rule
+## 10. Future removal tooling
 
-A plugin should be promoted only if:
+Archpack may later include tools that make plugin removal safer.
 
-- it solves a concrete user problem,
-- it can be demonstrated with a small pack,
-- it does not make the core harder to explain,
-- it can be disabled or left unused,
-- it does not force unrelated schema changes.
+Possible future tools:
+
+```text
+archpack plugin list
+archpack plugin disable <name>
+archpack plugin remove <name>
+archpack plugin doctor <name>
+```
+
+These are not core MVP commands.
+
+They should be added only after there are real reviewed plugins to manage.
 
 ---
 
-## 9. Current decision
+## 11. Current decision
 
 Current decision:
 
@@ -203,8 +254,14 @@ Current decision:
 Core MVP:
   pack directory → file tree → explicit repair
 
-Plugin model:
+Plugin intake:
+  single repository
+  reviewed before keeping
+  removable when unnecessary or unsafe
+
+Plugin implementation:
   deferred
+  no dynamic plugin loader yet
 
 .archpack/:
   not required for core MVP
