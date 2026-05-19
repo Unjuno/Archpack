@@ -81,11 +81,22 @@ def test_repair_overwrite_replaces_changed_files(tmp_path: Path) -> None:
     assert (out / "README.md").read_text(encoding="utf-8") == "# Example\n"
 
 
-def test_pack_tree_rejects_symlinks(tmp_path: Path) -> None:
+def test_pack_tree_rejects_symlink_files(tmp_path: Path) -> None:
     pack = make_pack(tmp_path)
     target = tmp_path / "target.txt"
     target.write_text("target\n", encoding="utf-8")
     (pack / "tree" / "link.txt").symlink_to(target)
+
+    with pytest.raises(UnsafePathError):
+        unpack(pack, tmp_path / "out")
+
+
+def test_pack_tree_rejects_symlink_directories(tmp_path: Path) -> None:
+    pack = make_pack(tmp_path)
+    target_dir = tmp_path / "target-dir"
+    target_dir.mkdir()
+    (target_dir / "leak.txt").write_text("leak\n", encoding="utf-8")
+    (pack / "tree" / "linked-dir").symlink_to(target_dir, target_is_directory=True)
 
     with pytest.raises(UnsafePathError):
         unpack(pack, tmp_path / "out")
