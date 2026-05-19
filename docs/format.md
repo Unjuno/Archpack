@@ -2,24 +2,23 @@
 
 ## 0. Purpose
 
-This document records the first direction for the core pack format.
+This document records the current core pack format.
 
-It is not a final schema.
-It exists to keep the MVP simple before implementation.
-
-The core MVP remains:
+The implemented core loop is:
 
 ```text
 pack directory → file tree → explicit repair
 ```
 
+The core format is intentionally small. Plugin-specific input formats are documented separately.
+
 ---
 
-## 1. Current decision
+## 1. Current core format
 
-The core pack format should not require YAML.
+The core pack format does not require YAML.
 
-The simplest authoring format is an actual directory tree.
+The human-authored format is an actual directory tree.
 
 Example:
 
@@ -33,7 +32,7 @@ architecture-pack/
       └─ app.py
 ```
 
-Running Archpack on this pack should generate:
+Running Archpack on this pack generates:
 
 ```text
 README.md
@@ -41,18 +40,40 @@ docs/architecture.md
 src/app.py
 ```
 
-The same pack directory should also be usable as the source for explicit repair.
+The same pack directory is also the source for explicit repair.
 
-The file name and directory structure are already represented by the filesystem.
-There is no need to rewrite the same structure in YAML for the core MVP.
+The file name and directory structure are represented by the filesystem.
+There is no need to rewrite the same structure in YAML for the core format.
 
 ---
 
-## 2. Why not YAML for file names
+## 2. Core commands and behavior
+
+Implemented core commands:
+
+```text
+archpack unpack <pack-dir> --out <dir>
+archpack unpack <pack-dir> --out <dir> --skip-existing
+archpack repair <pack-dir> --out <dir>
+archpack repair <pack-dir> --out <dir> --overwrite
+```
+
+Behavior summary:
+
+| Command | Existing files | Missing files | Changed files |
+|---|---|---|---|
+| `unpack` | stop with error | write | stop before overwrite |
+| `unpack --skip-existing` | skip | write | keep existing |
+| `repair` | skip | write | keep existing |
+| `repair --overwrite` | overwrite | write | overwrite |
+
+---
+
+## 3. Why not YAML for file names
 
 Writing file names and file bodies inside YAML is too tedious for the main authoring format.
 
-Rejected as canonical core MVP format:
+Rejected as canonical core format:
 
 ```yaml
 files:
@@ -79,7 +100,7 @@ This may still be useful for tests, APIs, or generated examples, but not as the 
 
 ---
 
-## 3. Directory pack model
+## 4. Directory pack model
 
 Preferred core pack model:
 
@@ -93,13 +114,13 @@ The `tree/` directory is copied into the output directory during generation.
 
 The same `tree/` directory is used as the source of truth during explicit repair.
 
-The core job is therefore simple:
+Core job:
 
 ```text
 read source tree → validate paths → write output tree
 ```
 
-For repair:
+Repair job:
 
 ```text
 read source tree → compare output tree → restore requested generated files
@@ -107,9 +128,9 @@ read source tree → compare output tree → restore requested generated files
 
 ---
 
-## 4. Repair option
+## 5. Repair policy
 
-Explicit repair is part of the core MVP.
+Explicit repair is part of the core.
 
 Repair means:
 
@@ -119,19 +140,49 @@ Repair means:
 - Archpack does not monitor continuously,
 - Archpack does not decide semantic correctness.
 
-Initial repair direction:
+Default repair behavior:
 
 ```text
-repair missing files by default
+repair missing files only
 ```
 
-Overwriting changed files should require a separate explicit option if added.
+Overwriting changed files requires:
+
+```text
+repair --overwrite
+```
 
 ---
 
-## 5. Metadata
+## 6. Plugin-specific formats
 
-Metadata is not required for the core MVP.
+Plugin-specific input is not part of the core format.
+
+The first reviewed plugin is the AGENTS.md generator.
+Its input is documented separately:
+
+```text
+docs/plugins/agents.md
+```
+
+Current agents plugin input:
+
+```text
+agents.toml
+```
+
+Core commands do not read `agents.toml`.
+Only the explicit plugin command reads it:
+
+```text
+archpack agents-generate <pack-dir> --out <dir>
+```
+
+---
+
+## 7. Metadata and IDs
+
+Metadata is not required for the current core.
 
 If metadata becomes necessary later, it can be added as a separate file.
 
@@ -145,46 +196,25 @@ architecture-pack/pack.toml
 
 Do not choose a metadata format before there is a concrete need.
 
-Possible future metadata:
-
-- pack name,
-- pack version,
-- file IDs,
-- plugin settings,
-- overwrite policy,
-- generated markers.
-
----
-
-## 6. IDs
-
-IDs are useful for future features, but they are not required for the core MVP.
-
-Reasons IDs may become useful later:
-
-- validation messages,
-- future manifests,
-- plugin output,
-- repair or drift checks,
-- references from plugin sections.
-
-But forcing IDs in the core MVP makes the first format more tedious.
+IDs are also not required for the current core.
+They may become useful later for validation messages, manifests, plugin output, repair checks, or references from plugin sections.
 
 Current decision:
 
 ```text
-Core MVP:
+Core:
+  no required metadata
   no required IDs
 
-Future metadata/plugin layer:
-  may add IDs if needed
+Plugin layer:
+  may define its own input files
 ```
 
 ---
 
-## 7. Empty directories
+## 8. Empty directories
 
-The core MVP should focus on files.
+The core should focus on files.
 
 Empty directories are not a priority.
 
@@ -198,7 +228,7 @@ A first-class empty directory rule can be reconsidered later.
 
 ---
 
-## 8. Tab-indented tree notation
+## 9. Tab-indented tree notation
 
 A tab-indented tree notation is not needed if the pack itself is a directory tree.
 
@@ -224,67 +254,27 @@ A tree text format may be useful later as a helper or converter, but not as the 
 
 ---
 
-## 9. Plugins
-
-Plugin-specific format should not be added to the core format until a plugin experiment proves the need.
-
-For example, an `AGENTS.md` plugin may later add its own metadata or config.
-
-That belongs to the plugin layer, not the core MVP.
-
----
-
-## 10. Scaffolding command
-
-A future command may create a starter pack directory.
-
-Possible direction:
-
-```text
-archpack init pack
-```
-
-Example generated structure:
-
-```text
-architecture-pack/
-└─ tree/
-   └─ README.md
-```
-
-Plugin-specific scaffolding can be added later, for example:
-
-```text
-archpack plugin scaffold agents
-```
-
-This is not required for the core MVP.
-
----
-
-## 11. Summary
+## 10. Summary
 
 Current decision:
 
 ```text
-Core MVP format:
+Core format:
   directory-based pack
 
-Core MVP behavior:
-  generate file tree
-  explicitly repair generated files when requested
-
-Canonical source of file names:
+Core source of file names:
   filesystem paths under tree/
 
-YAML:
-  not required for core MVP
-  possible future metadata format
+Core metadata:
+  not required
 
-IDs:
-  not required for core MVP
-  possible future metadata/plugin feature
+Core IDs:
+  not required
 
-Plugins:
-  deferred
+Plugin formats:
+  outside core
+  documented per plugin
+
+Reviewed plugin format:
+  agents plugin reads agents.toml
 ```
