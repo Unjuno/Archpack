@@ -2,143 +2,82 @@
 
 ## 0. Purpose
 
-Archpack should avoid growing into a large unclear tool.
+Archpack should stay small and reviewable.
 
-The project does not need a separate release repository or release fork at this stage.
-
-The main repository can contain the MVP, reviewed plugins, experiments, examples, and documentation, as long as accepted behavior remains reviewable and removable.
-
-The purpose is:
-
-```text
-try small features → review them → keep useful ones → remove bad or unnecessary ones
-```
+The main repository can contain the core, reviewed plugins, examples, tests, and documentation.
 
 ---
 
 ## 1. Core policy
 
-Archpack should grow through reviewed changes, not through uncontrolled feature accumulation.
+The core remains:
+
+```text
+pack directory → file tree → explicit repair
+```
+
+New behavior should not enter the core unless it clearly belongs there.
+
+---
+
+## 2. Experiment rule
 
 The default rule is:
 
 ```text
-one problem → one experiment → one review → keep, revise, or remove
+one problem → one small experiment → one review → keep, revise, or drop
 ```
 
-A plugin or feature may enter the repository only after review.
-
-A plugin or feature may also be removed later if it becomes unnecessary, too complex, unsafe, or out of scope.
+Each experiment should focus on one feature or one problem.
 
 ---
 
-## 2. Repository role
+## 3. Repository role
 
 Use one repository for now.
 
-The repository is used to:
+The repository may contain:
 
-- prove the core loop,
-- keep validation files and examples,
-- test candidate plugins,
-- collect user-story-map problems,
-- review plugin experiments,
-- keep accepted plugins,
-- remove features that should not remain.
+- the core,
+- reviewed plugins,
+- plugin examples,
+- plugin documentation,
+- tests,
+- small experiments under review.
 
-A separate release repository or release fork is not needed unless the single-repository workflow becomes unmanageable.
-
----
-
-## 3. Experiment unit
-
-Each experiment should focus on exactly one feature or one problem.
-
-Good examples:
-
-- Try `AGENTS.md` generation only.
-- Try effective inherited `AGENTS.md` generation only.
-- Try generated-file drift checks only.
-- Try clean-up of generated files only.
-- Try a simple reference check only.
-- Try a static network-call detector only.
-
-Bad examples:
-
-- Add AGENTS generation, drift checks, repair changes, clean-up, and network checks together.
-- Redesign the pack format while adding a new feature.
-- Add a feature without a concrete observed problem.
+A separate release repository or release fork is not needed unless this workflow becomes unmanageable.
 
 ---
 
-## 4. Recommended workflow
+## 4. Review questions
 
-```text
-concrete problem from user story map
-→ one-feature branch or small experiment
-→ implementation with tests
-→ review behavior and complexity
-→ keep, revise, or remove
-```
+Before keeping an experiment, answer:
 
-A fork is optional.
-
-A separate repository is optional.
-
-The important requirement is that the experiment remains small enough to review.
+1. What concrete problem does it solve?
+2. Can it be shown with a small example?
+3. Does it preserve the core loop?
+4. Does it add hidden complexity?
+5. Does it have tests or clear manual checks?
+6. Can it be documented briefly?
+7. Can it be dropped later without damaging the core?
 
 ---
 
 ## 5. Keep criteria
 
-A feature or plugin may remain in the repository only if:
+A feature or plugin may remain only if:
 
-- it solves a repeated or important user problem,
-- it has a small example,
-- it has tests or clear manual verification steps,
-- it does not force unrelated schema changes,
-- it does not make the core workflow harder to explain,
+- it solves a concrete problem,
+- it is small enough to review,
+- it has tests or clear checks,
+- it does not make the core harder to explain,
+- it does not force unrelated format changes,
 - it can be documented briefly,
-- it can be disabled, ignored, or removed when no longer needed.
-
-If these are not true, the feature should be revised or removed.
+- it can be ignored or dropped later.
 
 ---
 
-## 6. Review questions
-
-Before keeping an experiment, answer:
-
-1. What concrete problem does it solve?
-2. Can the problem be reproduced with a small example?
-3. Does the feature keep the pack format understandable?
-4. Does it preserve the small core loop?
-5. Does it introduce hidden complexity?
-6. Can it be tested?
-7. Can it be documented briefly?
-8. Can it be removed without damaging the core?
-9. Should this be kept, revised, or removed?
-
----
-
-## 7. Removal is allowed
-
-Removing a feature is not a failure.
-
-Removal is useful when it reveals:
-
-- the feature is too complex,
-- the problem is not Archpack's responsibility,
-- the idea needs a different design,
-- the feature should stay external,
-- the feature is useful only for a narrow project type,
-- the feature increases maintenance cost more than user value.
-
----
-
-## 8. Future removal tooling
-
-Archpack may later include tools that make removal safer.
+## 6. Future management tools
 
 Possible future tools:
 
@@ -149,36 +88,6 @@ archpack plugin remove <name>
 archpack plugin doctor <name>
 ```
 
-These are not core MVP commands.
+These are not core commands.
 
-They should be added only after there are real reviewed plugins to manage.
-
----
-
-## 9. Relationship to user story mapping
-
-The user story map identifies concrete problems.
-
-This experiment policy defines how candidate solutions are tested, reviewed, kept, or removed.
-
-```text
-user story map
-→ problem issue
-→ one-feature experiment
-→ review
-→ keep, revise, or remove
-```
-
----
-
-## 10. First rule
-
-Do not expand the core before the core MVP remains stable.
-
-The core MVP remains:
-
-```text
-pack directory → file tree → explicit repair
-```
-
-After that, plugin experiments may be generated in quantity, but they must remain reviewable and removable.
+They should be added only after there are multiple reviewed plugins to manage.
