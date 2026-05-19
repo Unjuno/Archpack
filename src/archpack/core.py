@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import shutil
 
 
@@ -60,11 +60,15 @@ def iter_pack_files(pack_dir: Path) -> list[tuple[Path, Path]]:
 def validate_relative_path(rel: Path) -> None:
     if rel.is_absolute():
         raise UnsafePathError(f"Absolute paths are not allowed: {rel}")
+    if PureWindowsPath(str(rel)).drive:
+        raise UnsafePathError(f"Windows drive paths are not allowed: {rel}")
     parts = rel.parts
     if not parts:
         raise UnsafePathError("Empty relative path is not allowed")
     if any(part in ("", ".", "..") for part in parts):
         raise UnsafePathError(f"Unsafe relative path: {rel}")
+    if any("\\" in part for part in parts):
+        raise UnsafePathError(f"Backslash paths are not allowed: {rel}")
 
 
 def destination_for(out_dir: Path, rel: Path) -> Path:
