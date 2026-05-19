@@ -1,20 +1,18 @@
 # Archpack
 
-Archpack is a small architecture-pack project.
+Archpack is a small directory-pack tool.
 
-The core MVP is intentionally narrow:
+The MVP core is:
 
 ```text
 pack directory → file tree → explicit repair
 ```
 
-The first goal is to read a pack directory and generate the file structure stored under its `tree/` directory.
+A pack is a directory that contains a `tree/` directory. Archpack copies files from `tree/` into an output directory and can explicitly repair missing or overwritten output files from the same pack.
 
-The MVP includes an explicit repair operation that restores generated files from the same pack directory when the output tree is damaged. This is not continuous enforcement or live monitoring.
+Archpack does not continuously enforce a structure and does not monitor projects in the background.
 
-Features such as `AGENTS.md` generation, effective inherited agent instructions, drift checks, clean-up, reference monitoring, and network monitoring are treated as plugin candidates or later experiments, not core MVP requirements.
-
-## Usage
+## Quick start
 
 Install for local development:
 
@@ -22,31 +20,45 @@ Install for local development:
 python -m pip install -e ".[dev]"
 ```
 
-Generate files from a pack directory:
+Generate files:
 
 ```bash
 archpack unpack examples/minimal-pack --out tmp/out
 ```
 
-Repair missing generated files from the same pack directory:
+Add only missing files without stopping on existing files:
+
+```bash
+archpack unpack examples/minimal-pack --out tmp/out --skip-existing
+```
+
+Repair missing files:
 
 ```bash
 archpack repair examples/minimal-pack --out tmp/out
 ```
 
-Overwrite changed files only when explicitly requested:
+Overwrite existing files only when explicitly requested:
 
 ```bash
 archpack repair examples/minimal-pack --out tmp/out --overwrite
 ```
 
-## Current documents
+Run tests:
 
-- `docs/roadmap.md` — staged project direction
-- `docs/format.md` — current core pack format notes
-- `docs/plugin-model.md` — core/plugin separation
-- `docs/user-story-map.md` — post-MVP problem collection flow
-- `docs/experiment-policy.md` — one-feature experiment and promotion policy
+```bash
+pytest
+```
+
+## Pack layout
+
+```text
+examples/minimal-pack/
+└─ tree/
+   └─ README.md
+```
+
+Only files under `tree/` are generated.
 
 ## Current core boundary
 
@@ -57,6 +69,7 @@ Core:
 - generate directories
 - generate files
 - write file contents
+- skip existing files when requested
 - explicitly repair generated files from the pack when requested
 
 Core does not:
@@ -64,8 +77,19 @@ Core does not:
 - continuously enforce the structure
 - monitor the project in the background
 - auto-repair without an explicit user action
+- generate `AGENTS.md` as special behavior
+- run plugins
 
-Plugin candidates:
+## Documents
+
+- `docs/usage.md` — MVP usage guide
+- `docs/roadmap.md` — staged project direction
+- `docs/format.md` — current core pack format notes
+- `docs/plugin-model.md` — core/plugin separation
+- `docs/user-story-map.md` — post-MVP problem collection flow
+- `docs/experiment-policy.md` — one-feature experiment and promotion policy
+
+## Deferred plugin candidates
 
 - generate `AGENTS.md`
 - generate effective inherited `AGENTS.md`
