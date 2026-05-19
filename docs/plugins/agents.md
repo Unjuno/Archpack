@@ -4,6 +4,14 @@
 
 The `agents` plugin generates `AGENTS.md` files from a small `agents.toml` file.
 
+It supports directory-level local rule blocks and writes effective `AGENTS.md` files.
+
+Effective means:
+
+```text
+parent rules + local rules = generated AGENTS.md
+```
+
 This plugin is explicit.
 It does not run during core `unpack` or `repair`.
 
@@ -48,18 +56,70 @@ dir = "src"
 rules = [
   "Keep application code under src.",
 ]
+
+[[agents]]
+dir = "src/services"
+rules = [
+  "Keep service rules in service modules.",
+]
 ```
 
-Each `[[agents]]` block defines one output `AGENTS.md` file.
+Each `[[agents]]` block defines local rules for one directory.
 
 | Field | Meaning |
 |---|---|
 | `dir` | Output directory relative to `--out` |
-| `rules` | Bullet rules to write into that directory's `AGENTS.md` |
+| `rules` | Local bullet rules for that directory |
 
 ---
 
-## 3. Generate AGENTS.md files
+## 3. Rule limits
+
+Each `[[agents]]` block is one local rule unit.
+
+Current limit:
+
+```text
+max 30 rules per local unit
+```
+
+Rules must be one-line strings.
+Empty rules are rejected.
+Duplicate `dir` blocks are rejected.
+
+---
+
+## 4. Effective generation
+
+Generated files include inherited parent rules.
+
+Input:
+
+```text
+.
+src
+src/services
+```
+
+Output:
+
+```text
+AGENTS.md
+src/AGENTS.md
+src/services/AGENTS.md
+```
+
+Effective rule behavior:
+
+| Output file | Included rules |
+|---|---|
+| `AGENTS.md` | `.` rules |
+| `src/AGENTS.md` | `.` rules + `src` rules |
+| `src/services/AGENTS.md` | `.` rules + `src` rules + `src/services` rules |
+
+---
+
+## 5. Generate AGENTS.md files
 
 Run:
 
@@ -74,9 +134,11 @@ tmp/agents-out/AGENTS.md
 tmp/agents-out/src/AGENTS.md
 ```
 
+If the input contains deeper directories, deeper `AGENTS.md` files are generated too.
+
 ---
 
-## 4. Default overwrite behavior
+## 6. Default overwrite behavior
 
 By default, existing `AGENTS.md` files are skipped.
 
@@ -95,7 +157,7 @@ Behavior:
 
 ---
 
-## 5. Explicit overwrite
+## 7. Explicit overwrite
 
 Use `--overwrite` only when you intentionally want to replace existing `AGENTS.md` files.
 
@@ -112,13 +174,12 @@ Behavior:
 
 ---
 
-## 6. What this plugin does not do
+## 8. What this plugin does not do
 
-This first plugin version does not:
+This plugin does not:
 
-- generate inherited effective `AGENTS.md`,
-- merge parent and child rules,
 - detect contradictory rules,
+- decide whether child rules weaken parent rules,
 - monitor files,
 - repair generated `AGENTS.md` automatically,
 - run during `unpack` or `repair`.
@@ -127,12 +188,14 @@ Those behaviors require separate review before being added.
 
 ---
 
-## 7. Test coverage
+## 9. Test coverage
 
 Current tests cover:
 
 - loading `agents.toml`,
 - generating root and subdirectory `AGENTS.md`,
+- inheriting parent rules into child `AGENTS.md`,
+- enforcing the 30-rule local unit limit,
 - skipping existing files by default,
 - overwriting only with `--overwrite`,
 - CLI behavior for `agents-generate`.
