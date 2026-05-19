@@ -12,6 +12,26 @@ A pack is a directory that contains a `tree/` directory. Archpack copies files f
 
 Archpack does not continuously enforce a structure and does not monitor projects in the background.
 
+## Demonstration
+
+Step-by-step demo pack and scripts:
+
+```text
+demo/
+```
+
+One command from the repository root:
+
+```powershell
+.\demo\run.ps1
+```
+
+```bash
+bash demo/run.sh
+```
+
+See `demo/README.md` for the Taskflow sample app, per-directory `AGENTS.md`, and what each step deploys into `demo/workspace/`.
+
 ## Quick start
 
 Install for local development:

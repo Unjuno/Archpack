@@ -7,3 +7,5 @@ __pycache__/
 dist/
 build/
 tmp/
+demo/workspace/
+demo/workspace/**/.taskflow/

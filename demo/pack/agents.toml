@@ -1,0 +1,37 @@
+# Source of truth for generated AGENTS.md files.
+# Regenerate: archpack agents-generate demo/pack --out demo/workspace --overwrite
+
+[[agents]]
+dir = "."
+rules = [
+  "This workspace is Taskflow: a small local task-list CLI (demo pack for Archpack).",
+  "Edit agents.toml in demo/pack, then run archpack agents-generate; do not hand-edit generated AGENTS.md files.",
+  "Keep changes reviewable; avoid new runtime dependencies unless pyproject.toml is updated with justification.",
+  "Verify with: cd demo/workspace && python -m pytest && python -m taskflow list",
+  "Prefer explicit repair/unpack from the Archpack pack over manual file recovery.",
+]
+
+[[agents]]
+dir = "docs"
+rules = [
+  "Documentation must match the implemented CLI (taskflow add | list | done | remove).",
+  "When adding flags or commands, update docs/architecture.md and docs/commands.md in the same change.",
+  "Use concrete examples with sample task titles, not placeholder lorem ipsum.",
+]
+
+[[agents]]
+dir = "src/taskflow"
+rules = [
+  "Application package: keep cli.py as argparse wiring only; domain logic belongs in models.py and services/.",
+  "Use stdlib only (dataclasses, argparse, datetime); no ORM or HTTP client in this demo.",
+  "Public CLI entry: python -m taskflow (see taskflow.__main__).",
+  "Raise TaskflowError for user-facing failures; catch at CLI boundary and print to stderr.",
+]
+
+[[agents]]
+dir = "src/taskflow/services"
+rules = [
+  "Services define storage boundaries; TaskStore persists to .taskflow/tasks.json under the workspace cwd.",
+  "services/ must not import cli.py or __main__.py; depend on models.py only.",
+  "List operations return tasks sorted by created_at ascending unless the caller requests otherwise.",
+]
