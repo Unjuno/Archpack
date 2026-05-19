@@ -76,23 +76,129 @@ The first repository-local plugin area should be:
 src/archpack/plugins/<plugin-name>/
 ```
 
+A plugin directory must contain one descriptor file:
+
+```text
+src/archpack/plugins/<plugin-name>/plugin.yml
+```
+
 Example:
 
 ```text
 src/archpack/plugins/
 └─ agents/
+   ├─ plugin.yml
    ├─ __init__.py
    ├─ commands.py
    └─ generator.py
 ```
 
-This means plugin recognition starts from repository structure, not from an external package manager.
+This means plugin recognition starts from repository structure plus a single plugin descriptor, not from an external package manager.
 
 Do not introduce a registry, installer, or dependency resolver before real plugins require it.
 
 ---
 
-## 4. Plugin acceptance rule
+## 4. Plugin descriptor rule
+
+`plugin.yml` is the single file that describes how the plugin is recognized and used.
+
+It should answer:
+
+- What is the plugin ID?
+- What problem does it solve?
+- Is it experimental or accepted?
+- What command exposes it?
+- What pack section or input does it read?
+- What files or behavior can it produce?
+- How can it be tested?
+- How can it be removed?
+
+A first descriptor direction:
+
+```yaml
+id: agents
+name: AGENTS.md generator
+status: experimental
+summary: Generate AGENTS.md files from declared local rules.
+
+commands:
+  - name: agents-generate
+    help: Generate AGENTS.md files from plugin input.
+    entrypoint: archpack.plugins.agents.commands:generate
+
+inputs:
+  pack_sections:
+    - agent_rules
+
+outputs:
+  files:
+    - AGENTS.md
+    - "**/AGENTS.md"
+
+remove:
+  safe_to_delete:
+    - src/archpack/plugins/agents/
+  generated_files:
+    - AGENTS.md
+    - "**/AGENTS.md"
+```
+
+This descriptor is not a package manager manifest.
+
+It is a local reviewed description of plugin behavior.
+
+---
+
+## 5. Plugin recognition rule
+
+A plugin is recognizable when all are true:
+
+1. it lives under `src/archpack/plugins/<plugin-name>/`,
+2. it contains `plugin.yml`,
+3. `plugin.yml` has an `id`,
+4. the `id` matches `<plugin-name>`,
+5. the plugin has been reviewed by the owner.
+
+Initial recognition should be conservative.
+
+Do not automatically execute every discovered plugin.
+
+Recognition only means Archpack can list or wire the plugin after review.
+
+---
+
+## 6. Plugin usage rule
+
+A plugin should be used through an explicit command or explicit CLI wiring.
+
+Do not run plugins implicitly during core `unpack` or `repair`.
+
+Good first-stage direction:
+
+```text
+archpack agents-generate <pack-dir> --out <dir>
+```
+
+or later:
+
+```text
+archpack plugin run agents <pack-dir> --out <dir>
+```
+
+The first form is simpler.
+The second form should wait until there are several plugins.
+
+Core commands remain independent:
+
+```text
+archpack unpack <pack-dir> --out <dir>
+archpack repair <pack-dir> --out <dir>
+```
+
+---
+
+## 7. Plugin acceptance rule
 
 A plugin may remain in the repository only if:
 
@@ -108,7 +214,7 @@ If a plugin fails these conditions, it should be revised or removed.
 
 ---
 
-## 5. Plugin shape for the first stage
+## 8. Plugin shape for the first stage
 
 Do not start with a dynamic plugin loader.
 
@@ -120,7 +226,7 @@ The first priority is reviewability, not extensibility.
 
 ---
 
-## 6. `.archpack/` rule
+## 9. `.archpack/` rule
 
 `.archpack/` may be introduced later, but it is not required for the core MVP.
 
@@ -132,7 +238,7 @@ It should not become an APT-like package directory.
 
 ---
 
-## 7. Rejected early layout
+## 10. Rejected early layout
 
 The previous local layout idea is rejected for now:
 
@@ -163,7 +269,7 @@ Corrected rule:
 
 ---
 
-## 8. Future project-local state direction
+## 11. Future project-local state direction
 
 If project-local state becomes necessary, separate configuration, state, and cache.
 
@@ -197,7 +303,7 @@ The important separation is:
 
 ---
 
-## 9. First plugin candidate
+## 12. First plugin candidate
 
 `AGENTS.md` generation is the first plugin candidate, not core behavior.
 
@@ -205,6 +311,12 @@ The candidate plugin location would be:
 
 ```text
 src/archpack/plugins/agents/
+```
+
+The candidate descriptor would be:
+
+```text
+src/archpack/plugins/agents/plugin.yml
 ```
 
 Possible future plugin input:
@@ -231,7 +343,7 @@ A later plugin extension may generate effective inherited `AGENTS.md` files.
 
 ---
 
-## 10. Why not an APT-like package manager now
+## 13. Why not an APT-like package manager now
 
 An APT-like package manager is too large for the current project stage.
 
@@ -249,7 +361,7 @@ Those decisions should wait until there are multiple real plugins worth managing
 
 ---
 
-## 11. Future removal tooling
+## 14. Future removal tooling
 
 Archpack may later include tools that make plugin removal safer.
 
@@ -268,7 +380,7 @@ They should be added only after there are real reviewed plugins to manage.
 
 ---
 
-## 12. Current decision
+## 15. Current decision
 
 Current decision:
 
@@ -283,6 +395,16 @@ Plugin intake:
 
 Plugin placement:
   src/archpack/plugins/<plugin-name>/
+
+Plugin descriptor:
+  src/archpack/plugins/<plugin-name>/plugin.yml
+
+Plugin recognition:
+  placement + plugin.yml + owner review
+
+Plugin usage:
+  explicit command only
+  no implicit execution during core unpack/repair
 
 Plugin implementation:
   deferred
