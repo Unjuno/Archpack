@@ -123,8 +123,7 @@ Core does not:
 - `docs/roadmap.md` — staged project direction
 - `docs/format.md` — current core pack format notes
 - `docs/plugin-model.md` — core/plugin separation
-- `docs/user-story-map.md` — post-MVP problem collection flow
-- `docs/experiment-policy.md` — one-feature experiment and promotion policy
+- `docs/experiment-policy.md` — one-feature experiment and review policy
 
 ## Plugin candidates
 
