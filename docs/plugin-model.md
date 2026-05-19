@@ -7,7 +7,7 @@ Archpack core should stay small.
 The core MVP is:
 
 ```text
-pack → file tree
+pack directory → file tree → explicit repair
 ```
 
 Plugins are a future extension point. They must not be required for the core MVP.
@@ -49,21 +49,24 @@ The corrected rule is:
 
 The core should only be responsible for:
 
-- reading a pack file,
+- reading a pack directory,
+- reading files under `tree/`,
 - creating directories,
 - creating files,
 - writing file contents,
-- applying basic safety checks.
+- applying basic safety checks,
+- explicitly repairing generated files from the pack directory when requested.
 
 The core should not require:
 
 - `AGENTS.md` generation,
 - plugin installation,
 - package management,
-- generated-file repair,
 - clean-up,
 - reference monitoring,
 - network monitoring.
+
+The core should not continuously enforce or monitor the project.
 
 ---
 
@@ -198,7 +201,7 @@ Current decision:
 
 ```text
 Core MVP:
-  pack → file tree
+  pack directory → file tree → explicit repair
 
 Plugin model:
   deferred
