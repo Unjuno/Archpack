@@ -72,7 +72,7 @@ Good examples:
 
 Bad examples:
 
-- Add AGENTS generation, drift checks, repair, clean-up, and network checks together.
+- Add AGENTS generation, drift checks, repair changes, clean-up, and network checks together.
 - Redesign the pack format while adding a new feature.
 - Add a feature without a concrete observed problem.
 
@@ -161,7 +161,7 @@ Do not expand the release body before the core MVP works.
 The core MVP remains:
 
 ```text
-pack → file tree
+pack directory → file tree → explicit repair
 ```
 
 After that, plugin experiments may be generated in quantity, but only reviewed and accepted behavior should enter the release body.
