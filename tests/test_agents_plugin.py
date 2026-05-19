@@ -1,7 +1,9 @@
 from pathlib import Path
 
+import pytest
+
 from archpack.cli import main
-from archpack.plugins.agents.generator import generate_agents, load_agent_rules
+from archpack.plugins.agents.generator import AgentsPluginError, generate_agents, load_agent_rules
 
 
 def make_agents_pack(tmp_path: Path) -> Path:
@@ -16,6 +18,10 @@ rules = ["Keep instructions short."]
 [[agents]]
 dir = "src"
 rules = ["Keep application code under src."]
+
+[[agents]]
+dir = "src/services"
+rules = ["Keep service rules in service modules."]
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -28,19 +34,36 @@ def test_load_agent_rules(tmp_path: Path) -> None:
 
     blocks = load_agent_rules(pack)
 
-    assert [block.directory.as_posix() for block in blocks] == [".", "src"]
+    assert [block.directory.as_posix() for block in blocks] == [".", "src", "src/services"]
     assert blocks[0].rules == ("Keep instructions short.",)
 
 
-def test_generate_agents_writes_agents_files(tmp_path: Path) -> None:
+def test_generate_agents_writes_effective_agents_files(tmp_path: Path) -> None:
     pack = make_agents_pack(tmp_path)
     out = tmp_path / "out"
 
     result = generate_agents(pack, out)
 
-    assert sorted(path.as_posix() for path in result.written) == ["AGENTS.md", "src/AGENTS.md"]
-    assert "Keep instructions short." in (out / "AGENTS.md").read_text(encoding="utf-8")
-    assert "Keep application code under src." in (out / "src" / "AGENTS.md").read_text(encoding="utf-8")
+    assert sorted(path.as_posix() for path in result.written) == [
+        "AGENTS.md",
+        "src/AGENTS.md",
+        "src/services/AGENTS.md",
+    ]
+
+    root_text = (out / "AGENTS.md").read_text(encoding="utf-8")
+    src_text = (out / "src" / "AGENTS.md").read_text(encoding="utf-8")
+    services_text = (out / "src" / "services" / "AGENTS.md").read_text(encoding="utf-8")
+
+    assert "Keep instructions short." in root_text
+    assert "Keep application code under src." not in root_text
+
+    assert "Keep instructions short." in src_text
+    assert "Keep application code under src." in src_text
+    assert "Keep service rules in service modules." not in src_text
+
+    assert "Keep instructions short." in services_text
+    assert "Keep application code under src." in services_text
+    assert "Keep service rules in service modules." in services_text
 
 
 def test_generate_agents_skips_existing_by_default(tmp_path: Path) -> None:
@@ -77,3 +100,24 @@ def test_agents_generate_cli(tmp_path: Path) -> None:
     assert exit_code == 0
     assert (out / "AGENTS.md").exists()
     assert (out / "src" / "AGENTS.md").exists()
+    assert (out / "src" / "services" / "AGENTS.md").exists()
+
+
+def test_agent_rule_block_rejects_more_than_30_rules(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    pack.mkdir()
+    rules = ",\n".join(f'  "rule {index}"' for index in range(31))
+    (pack / "agents.toml").write_text(
+        f"""
+[[agents]]
+dir = "."
+rules = [
+{rules}
+]
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(AgentsPluginError):
+        load_agent_rules(pack)
