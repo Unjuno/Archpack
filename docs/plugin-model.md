@@ -4,15 +4,13 @@
 
 Archpack core should stay small.
 
-The core MVP is:
+The core is:
 
 ```text
 pack directory → file tree → explicit repair
 ```
 
-Plugins are future extension units. They must not be required for the core MVP.
-
-A plugin does not need to live in a separate repository at this stage.
+Plugins are reviewed extension units. They must not be required for core commands.
 
 The current policy is:
 
@@ -53,7 +51,7 @@ Plugins may be added to the main repository after review.
 
 The repository can contain:
 
-- the core MVP,
+- the core,
 - reviewed plugin experiments,
 - accepted plugins,
 - plugin examples,
@@ -70,7 +68,7 @@ The important rule is that plugins must remain reviewable and removable.
 
 A plugin works by being placed in the appropriate plugin area.
 
-The first repository-local plugin area should be:
+The repository-local plugin area is:
 
 ```text
 src/archpack/plugins/<plugin-name>/
@@ -108,28 +106,32 @@ It should answer:
 - What is the plugin ID?
 - What problem does it solve?
 - Is it experimental or accepted?
+- Where is its usage document?
 - What command exposes it?
-- What pack section or input does it read?
+- What input does it read?
 - What files or behavior can it produce?
 - How can it be tested?
 - How can it be removed?
 
-A first descriptor direction:
+Current descriptor example:
 
 ```yaml
 id: agents
 name: AGENTS.md generator
 status: experimental
-summary: Generate AGENTS.md files from declared local rules.
+summary: Generate AGENTS.md files from local rules declared in agents.toml.
+
+docs:
+  usage: docs/plugins/agents.md
 
 commands:
   - name: agents-generate
-    help: Generate AGENTS.md files from plugin input.
+    help: Generate AGENTS.md files from agents.toml.
     entrypoint: archpack.plugins.agents.commands:generate
 
 inputs:
-  pack_sections:
-    - agent_rules
+  files:
+    - agents.toml
 
 outputs:
   files:
@@ -174,20 +176,19 @@ A plugin should be used through an explicit command or explicit CLI wiring.
 
 Do not run plugins implicitly during core `unpack` or `repair`.
 
-Good first-stage direction:
+Current reviewed plugin command:
 
 ```text
 archpack agents-generate <pack-dir> --out <dir>
 ```
 
-or later:
+A generic command may be considered later:
 
 ```text
-archpack plugin run agents <pack-dir> --out <dir>
+archpack plugin run <plugin-name> <pack-dir> --out <dir>
 ```
 
-The first form is simpler.
-The second form should wait until there are several plugins.
+The generic form should wait until there are several plugins.
 
 Core commands remain independent:
 
@@ -206,7 +207,7 @@ A plugin may remain in the repository only if:
 - it is small enough to review,
 - it has tests or clear verification steps,
 - it does not make the core harder to explain,
-- it does not force unrelated pack-format changes,
+- it does not force unrelated core format changes,
 - it can be documented briefly,
 - it can be disabled, ignored, or removed later.
 
@@ -214,136 +215,84 @@ If a plugin fails these conditions, it should be revised or removed.
 
 ---
 
-## 8. Plugin shape for the first stage
+## 8. Reviewed plugin: agents
 
-Do not start with a dynamic plugin loader.
+The first reviewed plugin is the AGENTS.md generator.
 
-The first accepted plugins should be explicit optional modules inside the repository.
-
-Initial plugin behavior should be invoked explicitly by core CLI wiring or a small reviewed command, not by automatic discovery.
-
-The first priority is reviewability, not extensibility.
-
----
-
-## 9. `.archpack/` rule
-
-`.archpack/` may be introduced later, but it is not required for the core MVP.
-
-If introduced, it should store project-local Archpack data only.
-
-It should not store plugin implementation code.
-
-It should not become an APT-like package directory.
-
----
-
-## 10. Rejected early layout
-
-The previous local layout idea is rejected for now:
-
-```text
-.archpack/
-├─ core/
-│  ├─ config.yml
-│  ├─ manifest.yml
-│  └─ lock.yml
-└─ plugins/
-   ├─ index.yml
-   └─ <plugin-name>/
-      ├─ config.yml
-      ├─ manifest.yml
-      └─ lock.yml
-```
-
-Reason:
-
-- It fixes too much structure before there are real plugins.
-- It mixes project configuration, generated state, plugin state, and possible plugin discovery.
-- It implies every plugin needs the same `config / manifest / lock` shape.
-- It makes `.archpack/` look like a package manager before Archpack needs one.
-
-Corrected rule:
-
-> Do not design a full project-local plugin storage layout before real reviewed plugins prove what state is actually needed.
-
----
-
-## 11. Future project-local state direction
-
-If project-local state becomes necessary, separate configuration, state, and cache.
-
-Candidate direction:
-
-```text
-.archpack/
-├─ config.yml
-├─ state/
-│  ├─ core/
-│  │  ├─ manifest.yml
-│  │  └─ lock.yml
-│  └─ plugins/
-│     └─ agents/
-│        ├─ manifest.yml
-│        └─ lock.yml
-└─ cache/
-   └─ plugins/
-      └─ agents/
-```
-
-This is only a candidate.
-
-The important separation is:
-
-- `config.yml` = project-local settings,
-- `state/` = generated state and reproducibility metadata,
-- `state/core/` = core-generated state,
-- `state/plugins/<plugin-name>/` = per-plugin generated state,
-- `cache/` = disposable cache.
-
----
-
-## 12. First plugin candidate
-
-`AGENTS.md` generation is the first plugin candidate, not core behavior.
-
-The candidate plugin location would be:
+Location:
 
 ```text
 src/archpack/plugins/agents/
 ```
 
-The candidate descriptor would be:
+Descriptor:
 
 ```text
 src/archpack/plugins/agents/plugin.yml
 ```
 
-Possible future plugin input:
+Usage document:
 
-```yaml
-agent_rules:
-  - dir: .
-    rules:
-      - Keep instructions short.
-
-  - dir: src
-    rules:
-      - Keep application logic inside src.
+```text
+docs/plugins/agents.md
 ```
 
-Possible output:
+Input:
+
+```text
+agents.toml
+```
+
+Command:
+
+```text
+archpack agents-generate <pack-dir> --out <dir>
+```
+
+Output examples:
 
 ```text
 AGENTS.md
 src/AGENTS.md
 ```
 
-A later plugin extension may generate effective inherited `AGENTS.md` files.
+This plugin is explicit. It does not run during `unpack` or `repair`.
 
 ---
 
-## 13. Why not an APT-like package manager now
+## 9. Deferred plugin extension: effective AGENTS.md
+
+A later extension may generate effective inherited `AGENTS.md` files:
+
+```text
+parent rules + local rules = effective AGENTS.md
+```
+
+This is not part of the current agents plugin.
+
+Open questions:
+
+- how to detect child rules that weaken parent rules,
+- whether to include inherited/local section headers,
+- whether to collapse duplicate rules,
+- whether effective files need a hard line limit.
+
+---
+
+## 10. `.archpack/` rule
+
+`.archpack/` is deferred.
+
+If introduced later, it should store project-local Archpack data only.
+
+It should not store plugin implementation code.
+It should not become an APT-like package directory.
+
+Do not design a full project-local state layout before real reviewed plugins prove what state is actually needed.
+
+---
+
+## 11. Why not an APT-like package manager now
 
 An APT-like package manager is too large for the current project stage.
 
@@ -361,7 +310,7 @@ Those decisions should wait until there are multiple real plugins worth managing
 
 ---
 
-## 14. Future removal tooling
+## 12. Future removal tooling
 
 Archpack may later include tools that make plugin removal safer.
 
@@ -374,18 +323,18 @@ archpack plugin remove <name>
 archpack plugin doctor <name>
 ```
 
-These are not core MVP commands.
+These are not core commands.
 
 They should be added only after there are real reviewed plugins to manage.
 
 ---
 
-## 15. Current decision
+## 13. Current decision
 
 Current decision:
 
 ```text
-Core MVP:
+Core:
   pack directory → file tree → explicit repair
 
 Plugin intake:
@@ -406,14 +355,12 @@ Plugin usage:
   explicit command only
   no implicit execution during core unpack/repair
 
-Plugin implementation:
-  deferred
-  no dynamic plugin loader yet
+Reviewed plugin:
+  agents
 
-.archpack/:
-  not required for core MVP
-  may later store config/state/cache
-
-APT-like package manager:
-  explicitly deferred
+Deferred:
+  effective AGENTS.md
+  dynamic plugin loader
+  .archpack state
+  APT-like package manager
 ```
