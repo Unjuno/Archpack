@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from archpack.core import ExistingFileError, UnsafePathError, repair, unpack
+from archpack.core import ExistingFileError, UnsafePathError, repair, unpack, validate_relative_path
 
 
 def make_pack(tmp_path: Path) -> Path:
@@ -100,3 +100,13 @@ def test_pack_tree_rejects_symlink_directories(tmp_path: Path) -> None:
 
     with pytest.raises(UnsafePathError):
         unpack(pack, tmp_path / "out")
+
+
+def test_relative_path_rejects_windows_drive_path() -> None:
+    with pytest.raises(UnsafePathError):
+        validate_relative_path(Path("C:/outside"))
+
+
+def test_relative_path_rejects_backslash_path() -> None:
+    with pytest.raises(UnsafePathError):
+        validate_relative_path(Path("src\\services"))
