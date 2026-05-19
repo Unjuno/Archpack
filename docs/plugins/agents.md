@@ -2,7 +2,10 @@
 
 ## 0. Purpose
 
-The `agents` plugin generates `AGENTS.md` files from a small `agents.toml` file.
+The `agents` plugin manages `AGENTS.md` files from a small `agents.toml` file.
+
+`agents.toml` is the source of truth.
+Generated `AGENTS.md` files are outputs.
 
 It supports directory-level local rule blocks and writes effective `AGENTS.md` files.
 
@@ -57,9 +60,36 @@ tmp/out/src/AGENTS.md
 
 `src/AGENTS.md` includes both root rules and `src` rules.
 
+Do not edit generated `AGENTS.md` files directly.
+Edit `agents.toml`, then run `agents-generate` again.
+
 ---
 
-## 2. Hierarchy notation
+## 2. Source-of-truth rule
+
+Manage agent instructions in one file:
+
+```text
+agents.toml
+```
+
+Generated files such as these are derived outputs:
+
+```text
+AGENTS.md
+src/AGENTS.md
+src/services/AGENTS.md
+```
+
+This keeps architecture instructions centralized and easier to review.
+
+If generated files become stale, update `agents.toml` and regenerate.
+
+Use `--overwrite` only when you intentionally want to replace existing generated `AGENTS.md` files.
+
+---
+
+## 3. Hierarchy notation
 
 Hierarchy is written with `dir` paths.
 
@@ -113,7 +143,7 @@ Do not use `..` path escapes.
 
 ---
 
-## 3. Plugin location
+## 4. Plugin location
 
 The plugin lives under:
 
@@ -129,7 +159,7 @@ src/archpack/plugins/agents/plugin.yml
 
 ---
 
-## 4. Input file
+## 5. Input file
 
 The plugin reads:
 
@@ -169,7 +199,7 @@ Each `[[agents]]` block defines local rules for one directory.
 
 ---
 
-## 5. Rule limits
+## 6. Rule limits
 
 Each `[[agents]]` block is one local rule unit.
 
@@ -194,7 +224,7 @@ Reason:
 
 ---
 
-## 6. Effective generation
+## 7. Effective generation
 
 Generated files include inherited parent rules.
 
@@ -224,7 +254,7 @@ Effective rule behavior:
 
 ---
 
-## 7. Generate AGENTS.md files
+## 8. Generate AGENTS.md files
 
 Run:
 
@@ -243,7 +273,7 @@ If the input contains deeper directories, deeper `AGENTS.md` files are generated
 
 ---
 
-## 8. Default overwrite behavior
+## 9. Default overwrite behavior
 
 By default, existing `AGENTS.md` files are skipped.
 
@@ -262,7 +292,7 @@ Behavior:
 
 ---
 
-## 9. Explicit overwrite
+## 10. Explicit overwrite
 
 Use `--overwrite` only when you intentionally want to replace existing `AGENTS.md` files.
 
@@ -279,7 +309,7 @@ Behavior:
 
 ---
 
-## 10. What this plugin does not do
+## 11. What this plugin does not do
 
 This plugin does not:
 
@@ -294,7 +324,7 @@ Those behaviors require separate review before being added.
 
 ---
 
-## 11. Test coverage
+## 12. Test coverage
 
 Current tests cover:
 
