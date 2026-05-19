@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 
 from .core import ArchpackError, repair, unpack
+from .plugins.agents.generator import generate_agents
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,6 +30,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Overwrite existing output files. Without this, repair only restores missing files.",
     )
 
+    agents_parser = subparsers.add_parser("agents-generate", help="Generate AGENTS.md files from agents.toml.")
+    agents_parser.add_argument("pack_dir", type=Path, help="Pack directory containing agents.toml.")
+    agents_parser.add_argument("--out", required=True, type=Path, help="Output directory.")
+    agents_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing AGENTS.md files.",
+    )
+
     return parser
 
 
@@ -44,6 +54,8 @@ def main(argv: list[str] | None = None) -> int:
                 result = unpack(args.pack_dir, args.out)
         elif args.command == "repair":
             result = repair(args.pack_dir, args.out, overwrite=args.overwrite)
+        elif args.command == "agents-generate":
+            result = generate_agents(args.pack_dir, args.out, overwrite=args.overwrite)
         else:
             parser.error(f"Unknown command: {args.command}")
             return 2
