@@ -91,12 +91,10 @@ There is no warning for the total generated `AGENTS.md` size.
 
 Reason:
 
-```text
-30 local rules × about 30 inherited directories = about 900 rules
-```
-
-This is still acceptable for the intended use.
-The constraint is local-unit readability, not total generated-file length.
+- The 30-rule limit is for each local rule unit, not for inherited output size.
+- Normal project directory depth is limited by practical filesystem and path-length constraints.
+- Extremely deep inheritance is not a primary case for Archpack.
+- The constraint is local-unit readability, not total generated-file length.
 
 ---
 
