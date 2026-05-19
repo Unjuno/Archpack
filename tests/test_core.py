@@ -40,6 +40,20 @@ def test_unpack_refuses_existing_file(tmp_path: Path) -> None:
     assert (out / "README.md").read_text(encoding="utf-8") == "user edit\n"
 
 
+def test_unpack_skip_existing_adds_missing_files_without_changing_existing(tmp_path: Path) -> None:
+    pack = make_pack(tmp_path)
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "README.md").write_text("user edit\n", encoding="utf-8")
+
+    result = unpack(pack, out, skip_existing=True)
+
+    assert sorted(path.as_posix() for path in result.written) == ["docs/architecture.md"]
+    assert sorted(path.as_posix() for path in result.skipped) == ["README.md"]
+    assert (out / "README.md").read_text(encoding="utf-8") == "user edit\n"
+    assert (out / "docs" / "architecture.md").read_text(encoding="utf-8") == "# Architecture\n"
+
+
 def test_repair_restores_missing_files_only_by_default(tmp_path: Path) -> None:
     pack = make_pack(tmp_path)
     out = tmp_path / "out"
