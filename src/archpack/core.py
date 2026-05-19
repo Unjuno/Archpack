@@ -36,6 +36,8 @@ def get_tree_dir(pack_dir: Path) -> Path:
         raise PackError(f"Pack path is not a directory: {pack_dir}")
     if not tree_dir.exists():
         raise PackError(f"Pack is missing tree directory: {tree_dir}")
+    if tree_dir.is_symlink():
+        raise UnsafePathError(f"Pack tree must not be a symlink: {tree_dir}")
     if not tree_dir.is_dir():
         raise PackError(f"Pack tree path is not a directory: {tree_dir}")
     return tree_dir
@@ -45,10 +47,10 @@ def iter_pack_files(pack_dir: Path) -> list[tuple[Path, Path]]:
     tree_dir = get_tree_dir(pack_dir)
     pairs: list[tuple[Path, Path]] = []
     for source in sorted(tree_dir.rglob("*")):
-        if source.is_dir():
-            continue
         if source.is_symlink():
             raise UnsafePathError(f"Symlinks are not allowed in pack tree: {source}")
+        if source.is_dir():
+            continue
         rel = source.relative_to(tree_dir)
         validate_relative_path(rel)
         pairs.append((source, rel))
