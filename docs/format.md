@@ -15,46 +15,25 @@ pack → file tree
 
 ---
 
-## 1. Core idea
+## 1. Current decision
 
-The core pack should describe files directly.
+The core pack format should not require YAML.
 
-A file entry should have:
-
-- an `id`,
-- a `path`,
-- `content`.
-
-The `path` is the file name and structure.
-
-Archpack should not need a separate directory tree model at first. Parent directories can be inferred from file paths.
-
----
-
-## 2. Minimal direction
+The simplest authoring format is an actual directory tree.
 
 Example:
 
-```yaml
-version: 0.1
-files:
-  - id: readme
-    path: README.md
-    content: |
-      # Example project
-
-  - id: docs_architecture
-    path: docs/architecture.md
-    content: |
-      # Architecture
-
-  - id: src_app
-    path: src/app.py
-    content: |
-      print("hello")
+```text
+architecture-pack/
+└─ tree/
+   ├─ README.md
+   ├─ docs/
+   │  └─ architecture.md
+   └─ src/
+      └─ app.py
 ```
 
-Expected output:
+Running Archpack on this pack should generate:
 
 ```text
 README.md
@@ -62,78 +41,136 @@ docs/architecture.md
 src/app.py
 ```
 
----
-
-## 3. Why use IDs
-
-IDs are useful even when paths already describe structure.
-
-The `id` can provide a stable reference for:
-
-- later plugin output,
-- validation messages,
-- generated examples,
-- future manifests,
-- future repair or drift checks,
-- references from other pack sections.
-
-A path can change.
-An ID can remain stable.
+The file name and directory structure are already represented by the filesystem.
+There is no need to rewrite the same structure in YAML for the core MVP.
 
 ---
 
-## 4. ID direction
+## 2. Why not YAML for file names
 
-The first ID rule should be simple:
+Writing file names and file bodies inside YAML is too tedious for the main authoring format.
 
-- IDs are unique within the pack.
-- IDs are human-readable.
-- IDs use lowercase letters, numbers, and underscores.
-- IDs do not encode file extensions unless useful.
-
-Examples:
+Rejected as canonical core MVP format:
 
 ```yaml
-id: readme
-id: docs_architecture
-id: src_app
-id: test_basic_generation
+files:
+  - id: readme
+    path: README.md
+    content: |
+      # Example project
+
+  - id: src_app
+    path: src/app.py
+    content: |
+      print("hello")
 ```
 
-Do not overdesign IDs before real examples exist.
+Problems:
+
+- It duplicates the file tree in text form.
+- Large file contents become awkward.
+- Editors cannot treat generated files as normal files before unpacking.
+- Diffs become harder to review.
+- The user must maintain both metadata and content in one place.
+
+This may still be useful for tests, APIs, or generated examples, but not as the preferred human-authored format.
 
 ---
 
-## 5. Directories
+## 3. Directory pack model
 
-The core format does not need a separate `directories:` section at first.
-
-Directory creation can be derived from file paths:
-
-```yaml
-path: docs/architecture.md
-```
-
-This implies:
+Preferred core pack model:
 
 ```text
-docs/
+architecture-pack/
+└─ tree/
+   └─ <files to generate>
 ```
 
-A separate directory entry can be reconsidered later if there is a concrete need, such as:
+The `tree/` directory is copied into the output directory.
 
-- empty directories,
-- directory metadata,
-- directory ownership,
-- plugin-specific directory rules.
+The core job is therefore simple:
+
+```text
+read source tree → validate paths → write output tree
+```
 
 ---
 
-## 6. Tab-indented tree notation
+## 4. Metadata
 
-A tab-indented tree notation is attractive for humans, but it should not be the core MVP format.
+Metadata is not required for the core MVP.
 
-Rejected core direction:
+If metadata becomes necessary later, it can be added as a separate file.
+
+Possible future options:
+
+```text
+architecture-pack/pack.yml
+architecture-pack/pack.json
+architecture-pack/pack.toml
+```
+
+Do not choose a metadata format before there is a concrete need.
+
+Possible future metadata:
+
+- pack name,
+- pack version,
+- file IDs,
+- plugin settings,
+- overwrite policy,
+- generated markers.
+
+---
+
+## 5. IDs
+
+IDs are useful for future features, but they are not required for the core MVP.
+
+Reasons IDs may become useful later:
+
+- validation messages,
+- future manifests,
+- plugin output,
+- repair or drift checks,
+- references from plugin sections.
+
+But forcing IDs in the core MVP makes the first format more tedious.
+
+Current decision:
+
+```text
+Core MVP:
+  no required IDs
+
+Future metadata/plugin layer:
+  may add IDs if needed
+```
+
+---
+
+## 6. Empty directories
+
+The core MVP should focus on files.
+
+Empty directories are not a priority.
+
+If needed, users can include a placeholder file such as:
+
+```text
+.gitkeep
+```
+
+A first-class empty directory rule can be reconsidered later.
+
+---
+
+## 7. Tab-indented tree notation
+
+A tab-indented tree notation is not needed if the pack itself is a directory tree.
+
+Rejected as canonical format:
 
 ```text
 README.md
@@ -144,112 +181,74 @@ docs/
 	architecture.md
 ```
 
-Reasons:
+Reason:
 
-- It creates a custom parser before the basic pack format is proven.
+- The actual filesystem already represents hierarchy.
+- A tree text file adds a second representation of the same structure.
 - Tabs and spaces become semantically dangerous.
-- YAML itself should not use tab indentation.
-- File content is harder to attach cleanly to each path.
-- Stable `id` references become awkward unless a second mapping is added.
+- File contents still need to live somewhere else.
 
-The core should keep this instead:
-
-```yaml
-files:
-  - id: src_app
-    path: src/app.py
-    content: |
-      print("hello")
-```
-
-A tree-like format may be useful later as an input helper or scaffolding command, but not as the first canonical format.
-
-Possible future direction:
-
-```text
-archpack scaffold tree
-```
-
-or:
-
-```text
-archpack convert tree.txt --to architecture-pack.yml
-```
-
-This would convert a visual tree into the canonical `files[]` format.
+A tree text format may be useful later as a helper or converter, but not as the canonical core format.
 
 ---
 
-## 7. Plugin sections
+## 8. Plugins
 
 Plugin-specific format should not be added to the core format until a plugin experiment proves the need.
 
-For example, an `AGENTS.md` plugin may later add something like:
+For example, an `AGENTS.md` plugin may later add its own metadata or config.
 
-```yaml
-agent_rules:
-  - id: root_agent_rules
-    dir: .
-    rules:
-      - Do not add external network calls unless explicitly allowed.
-```
-
-This belongs to the plugin, not the core MVP.
+That belongs to the plugin layer, not the core MVP.
 
 ---
 
-## 8. Format scaffolding command
+## 9. Scaffolding command
 
-Plugin format can become annoying to write by hand.
+A future command may create a starter pack directory.
 
-Therefore, a future plugin may provide a scaffolding command that generates a starter format section.
+Possible direction:
 
-Possible future direction:
+```text
+archpack init pack
+```
+
+Example generated structure:
+
+```text
+architecture-pack/
+└─ tree/
+   └─ README.md
+```
+
+Plugin-specific scaffolding can be added later, for example:
 
 ```text
 archpack plugin scaffold agents
 ```
 
-or:
-
-```text
-archpack init --plugin agents
-```
-
-This should generate a small editable example, not a large magic configuration.
-
-Example generated section:
-
-```yaml
-agent_rules:
-  - id: root_agent_rules
-    dir: .
-    rules:
-      - Keep instructions short.
-```
-
-This is deferred until the plugin model exists.
+This is not required for the core MVP.
 
 ---
 
-## 9. Current decision
+## 10. Summary
 
 Current decision:
 
 ```text
 Core MVP format:
-  files[] with id, path, content
+  directory-based pack
 
-Directories:
-  inferred from files[].path
+Canonical source of file names:
+  filesystem paths under tree/
 
-Tab-indented tree format:
-  not canonical for core MVP
-  possible future helper/convert command
+YAML:
+  not required for core MVP
+  possible future metadata format
+
+IDs:
+  not required for core MVP
+  possible future metadata/plugin feature
 
 Plugins:
   deferred
-
-Plugin scaffolding command:
-  useful later, not core MVP
 ```
