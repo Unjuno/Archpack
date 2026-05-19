@@ -21,6 +21,12 @@ agents-generate
 
 This plugin does not run during core `unpack` or `repair`.
 
+Detailed plugin guide:
+
+```text
+docs/plugins/agents.md
+```
+
 ---
 
 ## 1. Install for local development
@@ -126,23 +132,10 @@ Use this only when you intentionally want to restore the pack version.
 
 The first reviewed plugin generates `AGENTS.md` files from `agents.toml`.
 
-Example input:
-
-```text
-examples/agents-pack/agents.toml
-```
-
 Run:
 
 ```bash
 archpack agents-generate examples/agents-pack --out tmp/agents-out
-```
-
-This writes files such as:
-
-```text
-tmp/agents-out/AGENTS.md
-tmp/agents-out/src/AGENTS.md
 ```
 
 Existing `AGENTS.md` files are skipped by default.
@@ -153,7 +146,11 @@ To overwrite existing generated `AGENTS.md` files:
 archpack agents-generate examples/agents-pack --out tmp/agents-out --overwrite
 ```
 
-This plugin is explicit. It is not run by `unpack` or `repair`.
+For input format and full behavior, see:
+
+```text
+docs/plugins/agents.md
+```
 
 ---
 
