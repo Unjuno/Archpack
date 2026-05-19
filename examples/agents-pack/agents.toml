@@ -1,0 +1,12 @@
+[[agents]]
+dir = "."
+rules = [
+  "Keep instructions short.",
+  "Do not add network behavior unless explicitly requested.",
+]
+
+[[agents]]
+dir = "src"
+rules = [
+  "Keep application code under src.",
+]
