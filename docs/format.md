@@ -129,7 +129,58 @@ A separate directory entry can be reconsidered later if there is a concrete need
 
 ---
 
-## 6. Plugin sections
+## 6. Tab-indented tree notation
+
+A tab-indented tree notation is attractive for humans, but it should not be the core MVP format.
+
+Rejected core direction:
+
+```text
+README.md
+src/
+	app.py
+	helpers.py
+docs/
+	architecture.md
+```
+
+Reasons:
+
+- It creates a custom parser before the basic pack format is proven.
+- Tabs and spaces become semantically dangerous.
+- YAML itself should not use tab indentation.
+- File content is harder to attach cleanly to each path.
+- Stable `id` references become awkward unless a second mapping is added.
+
+The core should keep this instead:
+
+```yaml
+files:
+  - id: src_app
+    path: src/app.py
+    content: |
+      print("hello")
+```
+
+A tree-like format may be useful later as an input helper or scaffolding command, but not as the first canonical format.
+
+Possible future direction:
+
+```text
+archpack scaffold tree
+```
+
+or:
+
+```text
+archpack convert tree.txt --to architecture-pack.yml
+```
+
+This would convert a visual tree into the canonical `files[]` format.
+
+---
+
+## 7. Plugin sections
 
 Plugin-specific format should not be added to the core format until a plugin experiment proves the need.
 
@@ -147,7 +198,7 @@ This belongs to the plugin, not the core MVP.
 
 ---
 
-## 7. Format scaffolding command
+## 8. Format scaffolding command
 
 Plugin format can become annoying to write by hand.
 
@@ -181,7 +232,7 @@ This is deferred until the plugin model exists.
 
 ---
 
-## 8. Current decision
+## 9. Current decision
 
 Current decision:
 
@@ -191,6 +242,10 @@ Core MVP format:
 
 Directories:
   inferred from files[].path
+
+Tab-indented tree format:
+  not canonical for core MVP
+  possible future helper/convert command
 
 Plugins:
   deferred
