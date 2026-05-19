@@ -87,3 +87,12 @@ rules = ["first line\\nsecond line"]
 
     with pytest.raises(AgentsPluginError):
         load_agent_rules(pack)
+
+
+def test_agents_wrap_toml_parse_errors(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    pack.mkdir()
+    (pack / "agents.toml").write_text("[[agents]\n", encoding="utf-8")
+
+    with pytest.raises(AgentsPluginError, match="Invalid agents.toml"):
+        load_agent_rules(pack)
