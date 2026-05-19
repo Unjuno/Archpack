@@ -9,7 +9,7 @@ It is not an implementation spec, command reference, or finalized schema.
 Archpack should first prove one small core loop:
 
 ```text
-pack → file tree
+pack directory → file tree
 ```
 
 Everything else should be treated as a plugin candidate until the core is stable.
@@ -20,29 +20,37 @@ Everything else should be treated as a plugin candidate until the core is stable
 
 ### Goal
 
-Write one pack file and generate a project file structure from it.
+Prepare one pack directory and generate a project file structure from its `tree/` directory.
 
-The pack should describe:
+The pack directory should contain the files to generate as real files and folders.
 
-- directories,
-- files,
-- file contents.
+Example:
+
+```text
+architecture-pack/
+└─ tree/
+   ├─ README.md
+   ├─ docs/
+   │  └─ architecture.md
+   └─ src/
+      └─ app.py
+```
 
 ### Why
 
 The first value is reproducible structure generation.
 
-Instead of manually splitting one architecture document into many files, Archpack should create those files directly.
+Instead of manually splitting one architecture document into many files, Archpack should create those files directly from a directory pack.
 
 ### Success state
 
-A user can prepare one pack file, run Archpack, and obtain the described file tree.
+A user can prepare a pack directory, run Archpack, and obtain the described file tree.
 
 ### Undecided
 
-- Exact pack schema.
 - Command names and arguments.
 - Overwrite policy.
+- Whether metadata is needed at all.
 - Generated marker policy.
 
 ---
@@ -54,7 +62,7 @@ Archpack should not add every useful capability into the core.
 The core should stay small:
 
 ```text
-read pack → generate file tree
+read pack directory → generate file tree
 ```
 
 Additional behavior should be explored as plugins or plugin-like experiments.
@@ -67,7 +75,7 @@ This keeps the release body understandable even if many experiments are created.
 
 ### Goal
 
-Generate `AGENTS.md` files from pack-defined local rules.
+Generate `AGENTS.md` files from plugin-defined local rules.
 
 A project root `AGENTS.md` is expected.
 Additional `AGENTS.md` files can be generated in selected subdirectories.
@@ -174,9 +182,9 @@ Generated `src/services/auth/AGENTS.md`:
 The sequence should be:
 
 ```text
-1. Build core file tree generator.
-2. Validate the core with small packs.
-3. Define a minimal plugin boundary.
+1. Build core directory-pack file tree generator.
+2. Validate the core with small pack directories.
+3. Define a minimal plugin boundary only after the core works.
 4. Try AGENTS.md generation as the first plugin.
 5. Try effective AGENTS.md generation as a second plugin or extension.
 6. Promote only useful, reviewable plugin behavior into the release body.
@@ -213,7 +221,7 @@ Do not expand the core before the small loop works.
 First prove:
 
 ```text
-pack → file tree
+pack directory → file tree
 ```
 
 Then test additional capabilities as plugins.
