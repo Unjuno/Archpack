@@ -71,7 +71,7 @@ Core does not include:
 - implicit auto-repair,
 - plugin execution,
 - `AGENTS.md` generation as special behavior,
-- `.archpack/` state management,
+- `.archpack` state management,
 - package management.
 
 ---
@@ -163,6 +163,8 @@ parent rules + local rules = generated AGENTS.md
 
 Each local rule unit is limited to 30 rules.
 
+There is no warning for total generated `AGENTS.md` length.
+
 Output examples:
 
 ```text
@@ -184,7 +186,6 @@ Open questions:
 - How should child rules that weaken parent rules be detected?
 - Should duplicate rules be collapsed?
 - Should generated files include stronger machine-readable markers?
-- Should generated `AGENTS.md` files have a hard total line limit, separate from the 30-rule local unit limit?
 
 ---
 
@@ -192,7 +193,7 @@ Open questions:
 
 These are useful but not confirmed for the core.
 
-They should be considered only after concrete user stories justify them.
+They should be considered only after concrete problems justify them.
 
 - Generated-file drift check.
 - Clean-up.
