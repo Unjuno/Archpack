@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import tomllib
 
-from archpack.core import ArchpackError, destination_for, validate_relative_path
+from archpack.core import ArchpackError, UnsafePathError, destination_for, validate_relative_path
 
 
 MAX_LOCAL_RULE_LINES = 30
@@ -71,10 +71,13 @@ def load_agent_rules(pack_dir: Path) -> list[AgentRuleBlock]:
 
 
 def normalize_agent_dir(raw_dir: str) -> Path:
-    directory = Path(raw_dir)
     if raw_dir == ".":
         return Path(".")
-    validate_relative_path(directory)
+    directory = Path(raw_dir)
+    try:
+        validate_relative_path(directory, raw=raw_dir)
+    except UnsafePathError as exc:
+        raise AgentsPluginError(str(exc)) from exc
     return directory
 
 
@@ -113,7 +116,7 @@ def generate_agents(pack_dir: Path, out_dir: Path, *, overwrite: bool = False) -
     skipped: list[Path] = []
     blocks = load_agent_rules(pack_dir)
     for block in blocks:
-        rel = block.directory / "AGENTS.md"
+        rel = Path((block.directory / "AGENTS.md").as_posix())
         dest = destination_for(Path(out_dir), rel)
         if dest.exists() and not overwrite:
             skipped.append(rel)

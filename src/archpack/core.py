@@ -51,13 +51,20 @@ def iter_pack_files(pack_dir: Path) -> list[tuple[Path, Path]]:
             raise UnsafePathError(f"Symlinks are not allowed in pack tree: {source}")
         if source.is_dir():
             continue
-        rel = source.relative_to(tree_dir)
+        rel = Path(source.relative_to(tree_dir).as_posix())
         validate_relative_path(rel)
         pairs.append((source, rel))
     return pairs
 
 
-def validate_relative_path(rel: Path) -> None:
+def validate_relative_path(rel: Path, *, raw: str | None = None) -> None:
+    if raw is not None:
+        if raw.startswith("/") or raw.startswith("\\"):
+            raise UnsafePathError(f"Absolute paths are not allowed: {raw}")
+        if "\\" in raw:
+            raise UnsafePathError(f"Backslash paths are not allowed: {raw}")
+        if any(segment == "" for segment in raw.split("/")):
+            raise UnsafePathError(f"Unsafe relative path: {raw}")
     if rel.is_absolute():
         raise UnsafePathError(f"Absolute paths are not allowed: {rel}")
     if PureWindowsPath(str(rel)).drive:

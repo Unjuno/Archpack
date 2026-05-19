@@ -5,6 +5,17 @@ import pytest
 from archpack.core import ExistingFileError, UnsafePathError, repair, unpack, validate_relative_path
 
 
+def require_symlink_support(tmp_path: Path) -> None:
+    link = tmp_path / "link"
+    target = tmp_path / "target"
+    target.write_text("x", encoding="utf-8")
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlink creation is not supported in this environment")
+    link.unlink()
+
+
 def make_pack(tmp_path: Path) -> Path:
     pack = tmp_path / "pack"
     tree = pack / "tree"
@@ -82,6 +93,7 @@ def test_repair_overwrite_replaces_changed_files(tmp_path: Path) -> None:
 
 
 def test_pack_tree_rejects_symlink_files(tmp_path: Path) -> None:
+    require_symlink_support(tmp_path)
     pack = make_pack(tmp_path)
     target = tmp_path / "target.txt"
     target.write_text("target\n", encoding="utf-8")
@@ -92,6 +104,7 @@ def test_pack_tree_rejects_symlink_files(tmp_path: Path) -> None:
 
 
 def test_pack_tree_rejects_symlink_directories(tmp_path: Path) -> None:
+    require_symlink_support(tmp_path)
     pack = make_pack(tmp_path)
     target_dir = tmp_path / "target-dir"
     target_dir.mkdir()
@@ -109,4 +122,14 @@ def test_relative_path_rejects_windows_drive_path() -> None:
 
 def test_relative_path_rejects_backslash_path() -> None:
     with pytest.raises(UnsafePathError):
-        validate_relative_path(Path("src\\services"))
+        validate_relative_path(Path("src/services"), raw="src\\services")
+
+
+def test_relative_path_rejects_parent_segment() -> None:
+    with pytest.raises(UnsafePathError):
+        validate_relative_path(Path("src/../src"))
+
+
+def test_relative_path_rejects_duplicate_slashes() -> None:
+    with pytest.raises(UnsafePathError):
+        validate_relative_path(Path("src//services"), raw="src//services")
