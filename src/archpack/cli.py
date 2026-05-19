@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 from .core import ArchpackError, repair, unpack
-from .plugins.agents.generator import generate_agents
+from .plugins.agents.commands import generate
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "repair":
             result = repair(args.pack_dir, args.out, overwrite=args.overwrite)
         elif args.command == "agents-generate":
-            result = generate_agents(args.pack_dir, args.out, overwrite=args.overwrite)
+            result = generate(args.pack_dir, args.out, overwrite=args.overwrite)
         else:
             parser.error(f"Unknown command: {args.command}")
             return 2
