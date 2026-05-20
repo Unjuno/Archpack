@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: "ja-JP"
+early_access: false
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  review_status: true
+  review_details: true
+  commit_status: true
+  fail_commit_status: false
+  collapse_walkthrough: true
+  changed_files_summary: true
+  poem: false
+  in_progress_fortune: false
+  enable_prompt_for_ai_agents: false
+
+  path_filters:
+    - "!demo/workspace/**"
+    - "!tmp/**"
+    - "!dist/**"
+    - "!build/**"
+    - "!*.egg-info/**"
+    - "!__pycache__/**"
+    - "!*.pyc"
+
+  path_instructions:
+    - path: "src/**"
+      instructions: >
+        Archpack is a file-tree generation and explicit repair CLI.
+        Prioritize unintended overwrite, unsafe deletion, path traversal,
+        unclear generated-file boundaries, and mismatch between CLI behavior,
+        docs, and tests. Do not suggest broad redesign unless it fixes a
+        concrete correctness, safety, or maintainability issue.
+    - path: "docs/**"
+      instructions: >
+        Check whether documentation matches implemented CLI behavior.
+        Focus on command examples, plugin boundaries, repair/overwrite behavior,
+        and generated-file semantics.
+    - path: "tests/**"
+      instructions: >
+        Check whether tests cover destructive operations, overwrite refusal,
+        skip-existing behavior, repair behavior, path traversal, and plugin/core
+        boundaries.
+
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 5
+    ignore_title_keywords:
+      - "WIP"
+      - "Draft"
+      - "DO NOT REVIEW"
+      - "[skip review]"
+    ignore_usernames:
+      - "dependabot[bot]"
+      - "renovate[bot]"
+      - "github-actions[bot]"
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    simplify:
+      enabled: false
+
+chat:
+  art: false
+  auto_reply: false
