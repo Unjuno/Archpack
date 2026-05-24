@@ -38,7 +38,7 @@ def test_load_agent_rules(tmp_path: Path) -> None:
     assert blocks[0].rules == ("Keep instructions short.",)
 
 
-def test_generate_agents_writes_effective_agents_files(tmp_path: Path) -> None:
+def test_generate_agents_writes_scoped_agents_files(tmp_path: Path) -> None:
     pack = make_agents_pack(tmp_path)
     out = tmp_path / "out"
 
@@ -56,14 +56,20 @@ def test_generate_agents_writes_effective_agents_files(tmp_path: Path) -> None:
 
     assert "Keep instructions short." in root_text
     assert "Keep application code under src." not in root_text
+    assert "Keep service rules in service modules." not in root_text
+    assert "read each AGENTS.md on the path" in root_text
 
-    assert "Keep instructions short." in src_text
+    assert "Keep instructions short." not in src_text
     assert "Keep application code under src." in src_text
     assert "Keep service rules in service modules." not in src_text
+    assert "Read parent guidance first:" in src_text
+    assert "`../AGENTS.md`" in src_text
 
-    assert "Keep instructions short." in services_text
-    assert "Keep application code under src." in services_text
+    assert "Keep instructions short." not in services_text
+    assert "Keep application code under src." not in services_text
     assert "Keep service rules in service modules." in services_text
+    assert "Read parent guidance first:" in services_text
+    assert "`../AGENTS.md`" in services_text
 
 
 def test_generated_agents_file_marks_agents_toml_as_source_of_truth(tmp_path: Path) -> None:
