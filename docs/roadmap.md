@@ -120,9 +120,9 @@ Plugins should not run implicitly during core `unpack` or `repair`.
 
 ---
 
-## 5. Reviewed plugin: effective AGENTS.md generation
+## 5. Reviewed plugin: scoped AGENTS.md generation
 
-The first reviewed plugin is effective `AGENTS.md` generation.
+The first reviewed plugin is scoped `AGENTS.md` generation.
 
 Location:
 
@@ -158,12 +158,13 @@ archpack agents-generate <pack-dir> --out <dir> --overwrite
 Behavior:
 
 ```text
-parent rules + local rules = generated AGENTS.md
+local rules for that directory + a short navigation hint
 ```
 
-Each local rule unit is limited to 30 rules.
+Child `AGENTS.md` files do not copy parent rules.
+Agents should read guidance by walking from the repository root toward the target directory.
 
-There is no warning for total generated `AGENTS.md` length.
+Each local rule unit is limited to 30 rules.
 
 Output examples:
 
@@ -179,7 +180,7 @@ This plugin remains outside the core and only runs through explicit command invo
 
 ## 6. Open questions for agents plugin
 
-The reviewed agents plugin now generates effective files, but some policy checks are still intentionally deferred.
+The reviewed agents plugin now generates scoped files, but some policy checks are still intentionally deferred.
 
 Open questions:
 
