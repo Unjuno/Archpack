@@ -1,6 +1,6 @@
 # Archpack demonstration — Taskflow
 
-This demo deploys a **working small CLI app (Taskflow)** and **per-directory `AGENTS.md` files** with Archpack. It is not an empty skeleton: rules in `agents.toml` are written into each generated `AGENTS.md`.
+This demo deploys a **working small CLI app (Taskflow)** and **per-directory `AGENTS.md` files** with Archpack. It is not an empty skeleton: rules in `agents.toml` are written into generated scoped `AGENTS.md` files.
 
 ## Layout
 
@@ -33,21 +33,21 @@ demo/pack/
 
 ```text
 demo/workspace/
-├── AGENTS.md                         # repository-wide rules
+├── AGENTS.md                         # repository-wide local rules
 ├── docs/
-│   ├── AGENTS.md                     # docs rules (parent + local)
+│   ├── AGENTS.md                     # docs local rules + parent navigation
 │   ├── architecture.md
 │   └── commands.md
 ├── src/taskflow/
-│   ├── AGENTS.md                     # package rules (parent + src/taskflow)
+│   ├── AGENTS.md                     # package local rules + parent navigation
 │   ├── cli.py …
 │   └── services/
-│       ├── AGENTS.md                 # effective: . + src/taskflow + services
+│       ├── AGENTS.md                 # services local rules + parent navigation
 │       └── store.py
 └── tests/ …
 ```
 
-`src/taskflow/services/AGENTS.md` includes applicable rules from **root, src/taskflow, and services** (effective / inherited generation). The `docs/` tree is a sibling, so its rules are not included there.
+Each generated `AGENTS.md` is scoped to its own directory. Child files do not copy parent rules; they include a short navigation hint to read the parent `AGENTS.md` first.
 
 ---
 
@@ -151,6 +151,8 @@ Only the missing `docs/commands.md` is restored from the pack.
 | `docs` | `docs/AGENTS.md` | Keep docs aligned with the CLI |
 | `src/taskflow` | `src/taskflow/AGENTS.md` | Package layout, errors, stdlib-only |
 | `src/taskflow/services` | `src/taskflow/services/AGENTS.md` | Store boundary, import constraints |
+
+Each generated file contains only the local rules for the matching `dir`.
 
 ---
 
