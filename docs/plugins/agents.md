@@ -7,13 +7,16 @@ The `agents` plugin manages `AGENTS.md` files from a small `agents.toml` file.
 `agents.toml` is the source of truth.
 Generated `AGENTS.md` files are outputs.
 
-It supports directory-level local rule blocks and writes effective `AGENTS.md` files.
+It supports directory-level local rule blocks and writes **scoped** `AGENTS.md` files.
 
-Effective means:
+Scoped means:
 
 ```text
-parent rules + local rules = generated AGENTS.md
+local rules for that directory + a short navigation hint
 ```
+
+Child `AGENTS.md` files do not copy parent rules.
+Agents should read guidance by walking from the repository root toward the target directory.
 
 This plugin is explicit.
 It does not run during core `unpack` or `repair`.
@@ -58,7 +61,7 @@ tmp/out/AGENTS.md
 tmp/out/src/AGENTS.md
 ```
 
-`src/AGENTS.md` includes both root rules and `src` rules.
+`src/AGENTS.md` contains only the local `src` rules plus a pointer to read `../AGENTS.md` first.
 
 Do not edit generated `AGENTS.md` files directly.
 Edit `agents.toml`, then run `agents-generate` again.
@@ -129,13 +132,13 @@ src/AGENTS.md
 src/services/AGENTS.md
 ```
 
-Inherited rule behavior:
+Scoped rule behavior:
 
 | `dir` | Generated file | Included rules |
 |---|---|---|
-| `.` | `AGENTS.md` | `.` |
-| `src` | `src/AGENTS.md` | `.` + `src` |
-| `src/services` | `src/services/AGENTS.md` | `.` + `src` + `src/services` |
+| `.` | `AGENTS.md` | `.` only |
+| `src` | `src/AGENTS.md` | `src` only + parent navigation |
+| `src/services` | `src/services/AGENTS.md` | `src/services` only + parent navigation |
 
 Do not use tab-indented trees inside `agents.toml`.
 Do not use absolute paths.
@@ -213,20 +216,13 @@ Rules must be one-line strings.
 Empty rules are rejected.
 Duplicate `dir` blocks are rejected.
 
-There is no warning for the total generated `AGENTS.md` size.
-
-Reason:
-
-- The 30-rule limit is for each local rule unit, not for inherited output size.
-- Normal project directory depth is limited by practical filesystem and path-length constraints.
-- Extremely deep inheritance is not a primary case for Archpack.
-- The constraint is local-unit readability, not total generated-file length.
+There is no inherited output size to manage because parent rules are not copied into child `AGENTS.md` files.
 
 ---
 
-## 7. Effective generation
+## 7. Scoped generation
 
-Generated files include inherited parent rules.
+Generated files include only their own local rules.
 
 Input:
 
@@ -244,13 +240,23 @@ src/AGENTS.md
 src/services/AGENTS.md
 ```
 
-Effective rule behavior:
+Scoped rule behavior:
 
 | Output file | Included rules |
 |---|---|
 | `AGENTS.md` | `.` rules |
-| `src/AGENTS.md` | `.` rules + `src` rules |
-| `src/services/AGENTS.md` | `.` rules + `src` rules + `src/services` rules |
+| `src/AGENTS.md` | `src` rules |
+| `src/services/AGENTS.md` | `src/services` rules |
+
+Non-root files include a short navigation hint:
+
+```text
+Read parent guidance first:
+
+- `../AGENTS.md`
+```
+
+The root file tells agents to read each `AGENTS.md` on the path from repository root to the target directory.
 
 ---
 
@@ -313,6 +319,7 @@ Behavior:
 
 This plugin does not:
 
+- copy parent rules into child `AGENTS.md` files,
 - warn on total generated `AGENTS.md` length,
 - detect contradictory rules,
 - decide whether child rules weaken parent rules,
@@ -330,7 +337,8 @@ Current tests cover:
 
 - loading `agents.toml`,
 - generating root and subdirectory `AGENTS.md`,
-- inheriting parent rules into child `AGENTS.md`,
+- keeping generated files scoped to local rules,
+- adding parent navigation hints to non-root generated files,
 - enforcing the 30-rule local unit limit,
 - skipping existing files by default,
 - overwriting only with `--overwrite`,
