@@ -81,20 +81,14 @@ def normalize_agent_dir(raw_dir: str) -> Path:
     return directory
 
 
-def is_ancestor_or_self(parent: Path, child: Path) -> bool:
-    if parent == Path("."):
-        return True
-    parent_parts = parent.parts
-    child_parts = child.parts
-    return child_parts[: len(parent_parts)] == parent_parts
+def parent_agents_reference(directory: Path) -> str | None:
+    if directory == Path("."):
+        return None
+    return "../AGENTS.md"
 
 
-def effective_blocks_for(target: AgentRuleBlock, blocks: list[AgentRuleBlock]) -> list[AgentRuleBlock]:
-    inherited = [block for block in blocks if is_ancestor_or_self(block.directory, target.directory)]
-    return sorted(inherited, key=lambda block: (0 if block.directory == Path(".") else len(block.directory.parts)))
-
-
-def render_agents_md(blocks: list[AgentRuleBlock]) -> str:
+def render_agents_md(block: AgentRuleBlock) -> str:
+    label = "." if block.directory == Path(".") else block.directory.as_posix()
     lines = [
         "# AGENTS.md",
         "",
@@ -103,11 +97,30 @@ def render_agents_md(blocks: list[AgentRuleBlock]) -> str:
         "Edit agents.toml and regenerate this file; do not edit generated AGENTS.md files directly.",
         "",
     ]
-    for block in blocks:
-        label = "." if block.directory == Path(".") else block.directory.as_posix()
-        lines.extend([f"## Rules from `{label}`", ""])
-        lines.extend(f"- {rule}" for rule in block.rules)
-        lines.append("")
+    parent_reference = parent_agents_reference(block.directory)
+    if parent_reference is None:
+        lines.extend(
+            [
+                "## Navigation",
+                "",
+                "When working in a nested directory, read each AGENTS.md on the path from repository root to the target directory.",
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "## Navigation",
+                "",
+                "Read parent guidance first:",
+                "",
+                f"- `{parent_reference}`",
+                "",
+            ]
+        )
+    lines.extend([f"## Local rules for `{label}`", ""])
+    lines.extend(f"- {rule}" for rule in block.rules)
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -122,6 +135,6 @@ def generate_agents(pack_dir: Path, out_dir: Path, *, overwrite: bool = False) -
             skipped.append(rel)
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(render_agents_md(effective_blocks_for(block, blocks)), encoding="utf-8")
+        dest.write_text(render_agents_md(block), encoding="utf-8")
         written.append(rel)
     return AgentsResult(tuple(written), tuple(skipped))
