@@ -121,14 +121,14 @@ Current descriptor example:
 id: agents
 name: AGENTS.md generator
 status: experimental
-summary: Generate effective AGENTS.md files from local rules declared in agents.toml.
+summary: Generate scoped AGENTS.md files from local rules declared in agents.toml.
 
 docs:
   usage: docs/plugins/agents.md
 
 commands:
   - name: agents-generate
-    help: Generate effective AGENTS.md files from agents.toml.
+    help: Generate scoped AGENTS.md files from agents.toml.
     entrypoint: archpack.plugins.agents.commands:generate
     invocation: explicit
     arguments:
@@ -237,7 +237,7 @@ If a plugin fails these conditions, it should be revised or removed.
 
 ## 8. Reviewed plugin: agents
 
-The first reviewed plugin is the effective AGENTS.md generator.
+The first reviewed plugin is the scoped AGENTS.md generator.
 
 Location:
 
@@ -272,11 +272,13 @@ archpack agents-generate <pack-dir> --out <dir>
 Behavior:
 
 ```text
-parent rules + local rules = generated AGENTS.md
+local rules for that directory + a short navigation hint
 ```
 
+Child `AGENTS.md` files do not copy parent rules.
+Agents should read guidance by walking from the repository root toward the target directory.
+
 Each local rule unit is limited to 30 rules.
-There is no total generated-file length warning.
 
 Output examples:
 
@@ -382,7 +384,7 @@ Plugin usage:
   no implicit execution during core unpack/repair
 
 Reviewed plugin:
-  agents effective AGENTS.md generator
+  agents scoped AGENTS.md generator
 
 Deferred:
   contradiction checks
