@@ -64,7 +64,7 @@ Overwrite existing files only when explicitly requested:
 archpack repair examples/minimal-pack --out tmp/out --overwrite
 ```
 
-Generate effective AGENTS.md files with the reviewed agents plugin:
+Generate scoped AGENTS.md files with the reviewed agents plugin:
 
 ```bash
 archpack agents-generate examples/agents-pack --out tmp/agents-out
@@ -104,7 +104,7 @@ It reads:
 examples/agents-pack/agents.toml
 ```
 
-and writes effective `AGENTS.md` files such as:
+and writes scoped `AGENTS.md` files such as:
 
 ```text
 AGENTS.md
@@ -112,7 +112,7 @@ src/AGENTS.md
 src/services/AGENTS.md
 ```
 
-Effective means parent directory rules are included in child directory `AGENTS.md` files.
+Scoped means each generated `AGENTS.md` contains only the local rules for that directory. Non-root generated files include a short navigation hint to read the parent `AGENTS.md` first.
 
 Each local rule unit is limited to 30 rules.
 
@@ -157,7 +157,7 @@ Core does not:
 
 Reviewed:
 
-- generate effective `AGENTS.md`
+- generate scoped `AGENTS.md`
 
 Deferred:
 
