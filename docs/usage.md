@@ -130,13 +130,15 @@ Use this only when you intentionally want to restore the pack version.
 
 ## 7. Generate AGENTS.md files
 
-The first reviewed plugin generates `AGENTS.md` files from `agents.toml`.
+The first reviewed plugin generates scoped `AGENTS.md` files from `agents.toml`.
 
 Run:
 
 ```bash
 archpack agents-generate examples/agents-pack --out tmp/agents-out
 ```
+
+Each generated file contains only the local rules for its directory. Non-root files include a short navigation hint to read the parent `AGENTS.md` first.
 
 Existing `AGENTS.md` files are skipped by default.
 
@@ -206,7 +208,7 @@ Current test coverage includes:
 - overwrite repair,
 - symlink rejection,
 - `unpack --skip-existing`,
-- AGENTS.md plugin generation,
+- scoped AGENTS.md plugin generation,
 - AGENTS.md plugin overwrite behavior,
 - `agents-generate` CLI behavior.
 
@@ -216,7 +218,7 @@ Current test coverage includes:
 
 The following are not part of the current core:
 
-- effective inherited `AGENTS.md`,
+- inherited or effective copied `AGENTS.md`,
 - automatic plugin execution,
 - `.archpack/` state management,
 - continuous enforcement,
