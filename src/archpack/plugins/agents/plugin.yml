@@ -1,14 +1,14 @@
 id: agents
 name: AGENTS.md generator
 status: experimental
-summary: Generate effective AGENTS.md files from local rules declared in agents.toml.
+summary: Generate scoped AGENTS.md files from local rules declared in agents.toml.
 
 docs:
   usage: docs/plugins/agents.md
 
 commands:
   - name: agents-generate
-    help: Generate effective AGENTS.md files from agents.toml.
+    help: Generate scoped AGENTS.md files from agents.toml.
     entrypoint: archpack.plugins.agents.commands:generate
     invocation: explicit
     arguments:
